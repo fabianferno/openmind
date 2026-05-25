@@ -50,7 +50,7 @@ export default function Home() {
               <span className="text-signal glow-signal"> verify.</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
-              openmind reads the news, builds a knowledge graph of who and what moves a market,
+              openmind is a multi-agentic swarm intelligence prediction engine, that builds a knowledge graph of who and what moves a market,
               reasons to a calibrated +EV bet — then{" "}
               <span className="text-text">anchors its entire reasoning trace on Arc</span> and
               settles in USDC. Not a black box. A glass one.
