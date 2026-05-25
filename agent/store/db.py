@@ -66,17 +66,21 @@ def next_id(conn: Database, name: str) -> int:
         upsert=True,
         return_document=ReturnDocument.AFTER,
     )
+    assert doc is not None  # upsert=True + RETURN AFTER always yields a doc
     return int(doc["seq"])
 
 
-def _out(doc: dict[str, Any] | None, id_field: str = "id") -> dict[str, Any] | None:
+def _row(doc: dict[str, Any], id_field: str = "id") -> dict[str, Any]:
     """Map a stored doc to the SQLite-era row shape: `_id` -> `id_field`."""
-    if doc is None:
-        return None
     doc = dict(doc)
     if "_id" in doc:
         doc[id_field] = doc.pop("_id")
     return doc
+
+
+def _opt(doc: dict[str, Any] | None, id_field: str = "id") -> dict[str, Any] | None:
+    """`_row` for a possibly-missing `find_one` result."""
+    return _row(doc, id_field) if doc is not None else None
 
 
 # ---------- markets ----------
@@ -117,7 +121,7 @@ def upsert_market(conn: Database, m: dict[str, Any]) -> str:
 
 
 def get_market(conn: Database, market_id: str) -> dict[str, Any] | None:
-    return _out(conn["markets"].find_one({"_id": market_id}))
+    return _opt(conn["markets"].find_one({"_id": market_id}))
 
 
 def list_resolved_markets(
@@ -129,12 +133,12 @@ def list_resolved_markets(
     cur = conn["markets"].find(q).sort("end_date", DESCENDING)
     if limit:
         cur = cur.limit(limit)
-    return [_out(r) for r in cur]
+    return [_row(r) for r in cur]
 
 
 def list_open_markets(conn: Database, limit: int) -> list[dict[str, Any]]:
     cur = conn["markets"].find({"resolved": 0}).sort("volume_24h", DESCENDING).limit(limit)
-    return [_out(r) for r in cur]
+    return [_row(r) for r in cur]
 
 
 def list_tradeable_markets(conn: Database, limit: int) -> list[dict[str, Any]]:
@@ -144,7 +148,7 @@ def list_tradeable_markets(conn: Database, limit: int) -> list[dict[str, Any]]:
         .sort("volume_24h", DESCENDING)
         .limit(limit)
     )
-    return [_out(r) for r in cur]
+    return [_row(r) for r in cur]
 
 
 # ---------- decisions ----------
@@ -173,7 +177,7 @@ def record_decision(conn: Database, d: dict[str, Any]) -> int:
 
 
 def get_decision(conn: Database, decision_id: int) -> dict[str, Any] | None:
-    return _out(conn["decisions"].find_one({"_id": decision_id}))
+    return _opt(conn["decisions"].find_one({"_id": decision_id}))
 
 
 def recent_decisions(
@@ -181,7 +185,7 @@ def recent_decisions(
 ) -> list[dict[str, Any]]:
     q = {"kind": kind} if kind else {}
     cur = conn["decisions"].find(q).sort("_id", DESCENDING).limit(limit)
-    return [_out(r) for r in cur]
+    return [_row(r) for r in cur]
 
 
 def latest_prior_p_yes(conn: Database, market_id: str) -> float | None:
@@ -254,17 +258,17 @@ def close_position(
 
 def open_positions(conn: Database) -> list[dict[str, Any]]:
     cur = conn["positions"].find({"status": "open"}).sort("opened_at", 1)
-    return [_out(r) for r in cur]
+    return [_row(r) for r in cur]
 
 
 def all_positions(conn: Database, limit: int = 200) -> list[dict[str, Any]]:
     cur = conn["positions"].find().sort("_id", DESCENDING).limit(limit)
-    return [_out(r) for r in cur]
+    return [_row(r) for r in cur]
 
 
 def positions_with_market(conn: Database, limit: int = 200) -> list[dict[str, Any]]:
     """Positions newest-first, each enriched with its market `question` and `venue`."""
-    rows = [_out(r) for r in conn["positions"].find().sort("_id", DESCENDING).limit(limit)]
+    rows = [_row(r) for r in conn["positions"].find().sort("_id", DESCENDING).limit(limit)]
     ids = list({r["market_id"] for r in rows})
     markets = {m["_id"]: m for m in conn["markets"].find({"_id": {"$in": ids}})}
     for r in rows:
@@ -286,7 +290,7 @@ def latest_open_position_for_market(conn: Database, market_id: str) -> dict[str,
     row = conn["positions"].find_one(
         {"market_id": market_id, "status": "open"}, sort=[("_id", DESCENDING)]
     )
-    return _out(row)
+    return _opt(row)
 
 
 def simulated_closed_pnl(conn: Database) -> list[dict[str, Any]]:
@@ -319,7 +323,7 @@ def record_order(conn: Database, o: dict[str, Any]) -> int:
 
 def open_orders(conn: Database) -> list[dict[str, Any]]:
     cur = conn["orders"].find({"status": {"$in": ["open", "partial"]}}).sort("created_at", 1)
-    return [_out(r) for r in cur]
+    return [_row(r) for r in cur]
 
 
 def update_order(conn: Database, order_id: int, **fields: Any) -> None:
@@ -362,11 +366,11 @@ def set_breaker(conn: Database, name: str, *, tripped: bool, reason: str | None 
 
 
 def breaker_status(conn: Database, name: str) -> dict[str, Any] | None:
-    return _out(conn["breaker_state"].find_one({"_id": name}), "name")
+    return _opt(conn["breaker_state"].find_one({"_id": name}), "name")
 
 
 def all_breakers(conn: Database) -> list[dict[str, Any]]:
-    return [_out(r, "name") for r in conn["breaker_state"].find()]
+    return [_row(r, "name") for r in conn["breaker_state"].find()]
 
 
 def clear_breakers(conn: Database) -> None:
@@ -397,7 +401,7 @@ def snapshot_at_or_before(
     row = conn["market_snapshots"].find_one(
         {"market_id": market_id, "as_of": {"$lte": as_of}}, sort=[("as_of", DESCENDING)]
     )
-    return _out(row)
+    return _opt(row)
 
 
 # ---------- metrics ----------
@@ -436,7 +440,7 @@ def latest_calibration_multipliers(conn: Database) -> dict[str, float]:
 
 def latest_metrics(conn: Database) -> list[dict[str, Any]]:
     rows = sorted(_latest_metrics_rows(conn), key=lambda r: r["category"])
-    return [_out(r) for r in rows]
+    return [_row(r) for r in rows]
 
 
 # ---------- blocklist ----------
@@ -505,8 +509,8 @@ def get_graph(conn: Database, decision_id: int) -> dict[str, Any] | None:
     run = conn["graph_runs"].find_one({"_id": decision_id})
     if not run:
         return None
-    nodes = [_out(r) for r in conn["graph_nodes"].find({"decision_id": decision_id}).sort("_id", 1)]
-    edges = [_out(r) for r in conn["graph_edges"].find({"decision_id": decision_id}).sort("_id", 1)]
+    nodes = [_row(r) for r in conn["graph_nodes"].find({"decision_id": decision_id}).sort("_id", 1)]
+    edges = [_row(r) for r in conn["graph_edges"].find({"decision_id": decision_id}).sort("_id", 1)]
     return {
         "decision_id": decision_id,
         "ontology": json.loads(run["ontology_json"]),
@@ -540,7 +544,7 @@ def save_trace_blob(
 
 
 def get_trace_blob(conn: Database, decision_id: int) -> dict[str, Any] | None:
-    return _out(conn["trace_blobs"].find_one({"_id": decision_id}), "decision_id")
+    return _opt(conn["trace_blobs"].find_one({"_id": decision_id}), "decision_id")
 
 
 # ---------- on-chain anchors ----------
@@ -566,9 +570,9 @@ def record_anchor(conn: Database, a: dict[str, Any]) -> int:
 
 def anchors_for_decision(conn: Database, decision_id: int) -> list[dict[str, Any]]:
     cur = conn["onchain_anchors"].find({"decision_id": decision_id}).sort("_id", 1)
-    return [_out(r) for r in cur]
+    return [_row(r) for r in cur]
 
 
 def recent_anchors(conn: Database, limit: int = 50) -> list[dict[str, Any]]:
     cur = conn["onchain_anchors"].find().sort("_id", DESCENDING).limit(limit)
-    return [_out(r) for r in cur]
+    return [_row(r) for r in cur]
