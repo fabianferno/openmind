@@ -43,6 +43,19 @@ _ANIM_DELAY = {"entity_extracted": 0.09, "relation_extracted": 0.06}
 
 # ---------- health / config ----------
 
+@app.get("/")
+def root() -> dict[str, Any]:
+    """Service banner / quick liveness check."""
+    return {"service": "openmind API", "status": "ok", "docs": "/docs"}
+
+
+@app.get("/health")
+@app.get("/healthz")
+def healthz() -> dict[str, Any]:
+    """Lightweight liveness probe — no external calls (fast, for uptime/platform checks)."""
+    return {"status": "ok"}
+
+
 @app.get("/api/health")
 def health() -> dict[str, Any]:
     arc = get_arc()
