@@ -25,16 +25,7 @@ def gather(n: int) -> list[dict]:
         except Exception as e:  # noqa: BLE001
             print(f"discover warn: {e}")
     with db.connect() as conn:
-        rows = conn.execute(
-            """
-            SELECT * FROM markets
-             WHERE resolved = 0 AND last_price_yes BETWEEN 0.05 AND 0.95
-             ORDER BY COALESCE(volume_24h, 0) DESC
-             LIMIT ?
-            """,
-            (n,),
-        ).fetchall()
-    return [{k: r[k] for k in r.keys()} for r in rows]
+        return db.list_tradeable_markets(conn, n)
 
 
 def main() -> None:

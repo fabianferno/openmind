@@ -161,14 +161,9 @@ def report_cmd(as_json: bool) -> None:
 @click.argument("pattern")
 @click.option("--reason", default="")
 def block_cmd(pattern: str, reason: str) -> None:
-    from datetime import UTC, datetime
-
     from agent.store import db
     with db.connect() as conn:
-        conn.execute(
-            "INSERT OR REPLACE INTO blocklist (pattern, reason, added_at) VALUES (?, ?, ?)",
-            (pattern, reason, datetime.now(UTC).isoformat()),
-        )
+        db.add_blocklist(conn, pattern, reason)
     click.echo(f"blocked: {pattern!r}")
 
 

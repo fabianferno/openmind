@@ -15,12 +15,7 @@ log = get_logger(__name__)
 
 def _latest_prior_p_yes(market_id: str) -> float | None:
     with db.connect() as conn:
-        row = conn.execute(
-            "SELECT p_yes FROM decisions WHERE market_id = ? AND p_yes IS NOT NULL "
-            "ORDER BY id DESC LIMIT 1",
-            (market_id,),
-        ).fetchone()
-    return float(row["p_yes"]) if row else None
+        return db.latest_prior_p_yes(conn, market_id)
 
 
 def _refresh_market_price(market: dict[str, Any]) -> float:

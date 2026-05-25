@@ -81,19 +81,10 @@ def markets(limit: int = 24) -> dict[str, Any]:
 
     seeded = set(seeds.list_seeds())
     with db.connect() as conn:
-        rows = conn.execute(
-            """
-            SELECT id, venue, question, category, end_date, last_price_yes, volume_24h, resolved, raw
-              FROM markets
-             WHERE resolved = 0
-             ORDER BY COALESCE(volume_24h, 0) DESC
-             LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+        rows = db.list_open_markets(conn, limit)
     out = []
     for r in rows:
-        d = {k: r[k] for k in r.keys()}
+        d = dict(r)
         d["market_url"] = venue_market_url(d)
         d.pop("raw", None)
         d["seeded"] = any(s.startswith(d["id"].replace(":", "_")) for s in seeded)
@@ -174,16 +165,7 @@ async def analyze(market_id: str, replay: bool = False) -> EventSourceResponse:
 
 def _pick_open_markets(n: int) -> list[dict[str, Any]]:
     with db.connect() as conn:
-        rows = conn.execute(
-            """
-            SELECT * FROM markets
-             WHERE resolved = 0 AND last_price_yes BETWEEN 0.05 AND 0.95
-             ORDER BY COALESCE(volume_24h, 0) DESC
-             LIMIT ?
-            """,
-            (n,),
-        ).fetchall()
-    return [{k: r[k] for k in r.keys()} for r in rows]
+        return db.list_tradeable_markets(conn, n)
 
 
 async def _auto_stream(n: int):
@@ -284,16 +266,7 @@ def trace(decision_id: int) -> dict[str, Any]:
 @app.get("/api/portfolio")
 def portfolio() -> dict[str, Any]:
     with db.connect() as conn:
-        rows = conn.execute(
-            """
-            SELECT p.*, m.question AS question, m.venue AS venue
-              FROM positions p
-              LEFT JOIN markets m ON m.id = p.market_id
-             ORDER BY p.id DESC
-             LIMIT 200
-            """
-        ).fetchall()
-        positions = [{k: r[k] for k in r.keys()} for r in rows]
+        positions = db.positions_with_market(conn, 200)
         open_pos = [p for p in positions if p["status"] == "open"]
         realized = sum(p["pnl"] or 0 for p in positions if p["status"] == "closed")
     return {
