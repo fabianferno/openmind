@@ -1,0 +1,12 @@
+.venv/
+web/
+node_modules/
+data/*.db
+data/*.db-*
+data/historical_cache/
+logs/
+.git/
+__pycache__/
+*.pyc
+.env
+docs/

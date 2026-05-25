@@ -1,0 +1,35 @@
+# Durable deploy for the openmind API (Render). `render.yaml` blueprint.
+# Set the secret env vars in the Render dashboard (marked sync:false).
+services:
+  - type: web
+    name: openmind-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: AGENT_MODE
+        value: paper
+      - key: ARC_ENABLED
+        value: "true"
+      - key: ARC_RPC_URL
+        value: https://rpc.testnet.arc.network
+      - key: ARC_CHAIN_ID
+        value: "5042002"
+      - key: BEDROCK_MODEL_ID
+        value: apac.amazon.nova-lite-v1:0
+      - key: GRAPHRAG_ENABLED
+        value: "true"
+      # --- secrets: set these in the dashboard ---
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: MANIFOLD_API_KEY
+        sync: false
+      - key: ARC_TESTNET_WALLET_PRIVATE_KEY
+        sync: false

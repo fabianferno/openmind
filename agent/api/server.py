@@ -27,10 +27,12 @@ log = get_logger(__name__)
 
 app = FastAPI(title="openmind API", version="0.1.0")
 
+# Public read-mostly API consumed by a static frontend (no cookies) → allow any origin.
+# This lets the deployed Vercel app (and judges) reach the agent over SSE + REST.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.web_origin, "http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -149,6 +151,69 @@ async def analyze(market_id: str, replay: bool = False) -> EventSourceResponse:
     if not market:
         raise HTTPException(404, f"unknown market {market_id}")
     return EventSourceResponse(_live_stream(market))
+
+
+# ---------- autonomous mode (SSE) ----------
+
+def _pick_open_markets(n: int) -> list[dict[str, Any]]:
+    with db.connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT * FROM markets
+             WHERE resolved = 0 AND last_price_yes BETWEEN 0.05 AND 0.95
+             ORDER BY COALESCE(volume_24h, 0) DESC
+             LIMIT ?
+            """,
+            (n,),
+        ).fetchall()
+    return [{k: r[k] for k in r.keys()} for r in rows]
+
+
+async def _auto_stream(n: int):
+    queue: asyncio.Queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+
+    def top(event: str, data: dict[str, Any]) -> None:
+        loop.call_soon_threadsafe(queue.put_nowait, {"event": event, "data": data})
+
+    def worker() -> None:
+        try:
+            markets = _pick_open_markets(n)
+            top("auto_start", {"n": len(markets)})
+            for idx, m in enumerate(markets):
+                top("auto_pick", {
+                    "index": idx,
+                    "market": {"id": m["id"], "question": m["question"],
+                               "category": m.get("category"), "price_yes": m.get("last_price_yes")},
+                })
+
+                def emit(ev: str, data: dict[str, Any], _i: int = idx) -> None:
+                    loop.call_soon_threadsafe(
+                        queue.put_nowait,
+                        {"event": "auto_event", "data": {"index": _i, "ev": ev, "data": data}},
+                    )
+
+                try:
+                    run_analysis(m, emit=emit)
+                except Exception as e:  # noqa: BLE001
+                    top("auto_error", {"index": idx, "message": str(e)})
+        except Exception as e:  # noqa: BLE001
+            top("auto_error", {"index": -1, "message": str(e)})
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, {"event": "auto_done", "data": {}})
+
+    threading.Thread(target=worker, daemon=True).start()
+    while True:
+        item = await queue.get()
+        yield _sse_format(item["event"], item["data"])
+        if item["event"] == "auto_done":
+            break
+
+
+@app.get("/api/auto")
+async def auto(n: int = 3) -> EventSourceResponse:
+    """Agent autonomously selects markets from its universe and trades them — no human pick."""
+    return EventSourceResponse(_auto_stream(min(max(n, 1), 8)))
 
 
 # ---------- history reads ----------
