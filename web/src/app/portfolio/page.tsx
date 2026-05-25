@@ -49,16 +49,22 @@ export default function PortfolioPage() {
         <div>
           <SectionLabel index="01">Positions</SectionLabel>
           <div className="panel mt-3 divide-y divide-line">
-            {(pf?.positions ?? []).slice(0, 12).map((p) => (
-              <div key={p.id} className="flex items-center justify-between px-4 py-3">
+            {(pf?.positions ?? []).slice(0, 14).map((p) => (
+              <Link
+                key={p.id}
+                href={`/analyze/${encodeURIComponent(p.market_id)}`}
+                className="group flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-bg-elev"
+              >
                 <div className="min-w-0">
-                  <div className="mono text-[12px] text-text truncate">{p.market_id}</div>
+                  <div className="text-[13px] leading-tight text-text transition-colors group-hover:text-signal truncate">
+                    {p.question || p.market_id}
+                  </div>
                   <div className="mono mt-0.5 text-[10px] uppercase tracking-[0.12em] text-faint">
                     {p.side} · {p.shares.toFixed(2)} sh @ {(p.entry_price * 100).toFixed(0)}¢
+                    {p.entry_decision_id != null && <> · #{p.entry_decision_id}</>}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Pill tone={p.status === "open" ? "cyan" : "neutral"}>{p.status}</Pill>
+                <div className="flex shrink-0 items-center gap-3">
                   {p.pnl != null && (
                     <span
                       className={`mono text-[12px] tabular-nums ${
@@ -69,8 +75,10 @@ export default function PortfolioPage() {
                       {p.pnl.toFixed(2)}
                     </span>
                   )}
+                  <Pill tone={p.status === "open" ? "cyan" : "neutral"}>{p.status}</Pill>
+                  <span className="mono text-faint transition-colors group-hover:text-signal">→</span>
                 </div>
-              </div>
+              </Link>
             ))}
             {(!pf || pf.positions.length === 0) && (
               <div className="mono p-6 text-center text-[11px] text-faint">no positions yet</div>

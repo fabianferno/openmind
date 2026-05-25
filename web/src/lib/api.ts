@@ -58,11 +58,14 @@ export type PortfolioResp = {
 export type Position = {
   id: number;
   market_id: string;
+  question: string | null;
+  venue: string | null;
   side: string;
   shares: number;
   entry_price: number;
   pnl: number | null;
   status: string;
+  entry_decision_id: number | null;
   opened_at: string;
 };
 export type MetricsResp = {

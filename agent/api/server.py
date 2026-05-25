@@ -284,7 +284,16 @@ def trace(decision_id: int) -> dict[str, Any]:
 @app.get("/api/portfolio")
 def portfolio() -> dict[str, Any]:
     with db.connect() as conn:
-        positions = db.all_positions(conn)
+        rows = conn.execute(
+            """
+            SELECT p.*, m.question AS question, m.venue AS venue
+              FROM positions p
+              LEFT JOIN markets m ON m.id = p.market_id
+             ORDER BY p.id DESC
+             LIMIT 200
+            """
+        ).fetchall()
+        positions = [{k: r[k] for k in r.keys()} for r in rows]
         open_pos = [p for p in positions if p["status"] == "open"]
         realized = sum(p["pnl"] or 0 for p in positions if p["status"] == "closed")
     return {
