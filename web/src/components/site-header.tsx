@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -24,7 +25,15 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-line bg-bg/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between px-5">
         <div className="flex items-center gap-8">
-          <Link href="/" className="group flex items-baseline gap-2">
+          <Link href="/" className="group flex items-center gap-2.5">
+            <Image
+              src="/logo.png"
+              alt=""
+              width={28}
+              height={28}
+              className="size-7 shrink-0"
+              priority
+            />
             <span className="serif text-xl leading-none tracking-tight">openmind</span>
             <span className="label hidden text-faint sm:inline">/ reasoning you can verify</span>
           </Link>

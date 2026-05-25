@@ -20,9 +20,30 @@ const plexSans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: process.env.VERCEL_URL
+    ? new URL(`https://${process.env.VERCEL_URL}`)
+    : new URL("http://localhost:3000"),
   title: "openmind — reasoning you can verify",
   description:
     "An autonomous prediction-market agent that builds a knowledge graph to find +EV bets, then anchors its reasoning trace on Arc and settles in USDC.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "openmind — reasoning you can verify",
+    description:
+      "An autonomous prediction-market agent that builds a knowledge graph to find +EV bets, then anchors its reasoning trace on Arc and settles in USDC.",
+    images: [{ url: "/logo.png", width: 512, height: 512, alt: "openmind" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "openmind — reasoning you can verify",
+    description:
+      "An autonomous prediction-market agent that builds a knowledge graph to find +EV bets, then anchors its reasoning trace on Arc and settles in USDC.",
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({
