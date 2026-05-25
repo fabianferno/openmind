@@ -119,13 +119,8 @@ def run_backtest(
 
             # close at resolution
             with db.connect() as conn:
-                pos = conn.execute(
-                    "SELECT * FROM positions WHERE market_id = ? AND status='open' "
-                    "ORDER BY id DESC LIMIT 1",
-                    (m["id"],),
-                ).fetchone()
-            if pos:
-                pos_dict = {k: pos[k] for k in pos.keys()}
+                pos_dict = db.latest_open_position_for_market(conn, m["id"])
+            if pos_dict:
                 executor.close_position(
                     position=pos_dict, market=m, exit_decision_id=None, size_fraction=1.0,
                 )
@@ -135,9 +130,7 @@ def run_backtest(
 
     # tally pnl
     with db.connect() as conn:
-        rows = conn.execute(
-            "SELECT pnl, notional_in FROM positions WHERE venue='simulated' AND status='closed'"
-        ).fetchall()
+        rows = db.simulated_closed_pnl(conn)
     for r in rows:
         pnl_total += float(r["pnl"] or 0.0)
         notional_total += float(r["notional_in"] or 0.0)

@@ -6,9 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from agent.config import settings
-
-SEED_DIR = Path(settings.agent_db_path).parent / "seeds"
+SEED_DIR = Path("data") / "seeds"
 
 
 def _path(market_id: str) -> Path:

@@ -12,6 +12,7 @@ dist/
 venv/
 data/*.db
 data/*.db-journal
+data/backups/
 data/historical_cache/
 logs/
 *.log

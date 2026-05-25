@@ -82,7 +82,8 @@ class Settings(BaseSettings):
     polymarket_chain_id: int = 137
 
     # ---- storage / obs ----
-    agent_db_path: Path = Path("data/agent.db")
+    mongo_db_url: str = ""
+    mongo_db_name: str = "openmind"
     agent_log_path: Path = Path("logs/agent.jsonl")
     agent_log_level: str = "INFO"
     alert_webhook_url: str | None = None

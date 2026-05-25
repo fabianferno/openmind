@@ -20,16 +20,7 @@ from agent.store import db
 
 def pick_markets(limit: int = 3) -> list[dict]:
     with db.connect() as conn:
-        rows = conn.execute(
-            """
-            SELECT * FROM markets
-             WHERE resolved = 0 AND last_price_yes BETWEEN 0.05 AND 0.95
-             ORDER BY COALESCE(volume_24h, 0) DESC
-             LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
-        return [{k: r[k] for k in r.keys()} for r in rows]
+        return db.list_tradeable_markets(conn, limit)
 
 
 def seed_one(market: dict) -> None:

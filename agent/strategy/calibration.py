@@ -78,35 +78,27 @@ def recompute(*, persist: bool = True) -> dict[str, CategoryMetrics]:
     """Recompute per-category and overall metrics from `decisions` + `positions`."""
     out: dict[str, CategoryMetrics] = {}
     with db.connect() as conn:
-        # We score every entry decision against the eventual market resolution.
-        rows = conn.execute(
-            """
-            SELECT d.id AS decision_id, d.p_yes, d.action, d.market_id,
-                   m.category, m.resolution_value, m.resolved
-              FROM decisions d
-              JOIN markets m ON m.id = d.market_id
-             WHERE d.kind = 'entry' AND d.p_yes IS NOT NULL
-               AND m.resolved = 1 AND m.resolution_value IS NOT NULL
-            """
-        ).fetchall()
+        # Score every entry decision against the eventual market resolution.
         per_cat: dict[str, list[tuple[float, float]]] = {}
         all_preds: list[tuple[float, float]] = []
-        for r in rows:
-            cat = (r["category"] or "uncategorised").lower()
-            pair = (float(r["p_yes"]), float(r["resolution_value"]))
+        for d in conn["decisions"].find({"kind": "entry", "p_yes": {"$ne": None}}):
+            m = conn["markets"].find_one({"_id": d["market_id"]})
+            if not m or m.get("resolved") != 1 or m.get("resolution_value") is None:
+                continue
+            cat = (m.get("category") or "uncategorised").lower()
+            pair = (float(d["p_yes"]), float(m["resolution_value"]))
             per_cat.setdefault(cat, []).append(pair)
             all_preds.append(pair)
 
-        pnl_rows = conn.execute(
-            """
-            SELECT m.category, COALESCE(SUM(p.pnl), 0) AS pnl,
-                   COALESCE(SUM(p.notional_in), 0) AS notional
-              FROM positions p JOIN markets m ON m.id = p.market_id
-             WHERE p.status = 'closed'
-             GROUP BY m.category
-            """
-        ).fetchall()
-        pnl_by_cat = {(r["category"] or "uncategorised").lower(): (r["pnl"], r["notional"]) for r in pnl_rows}
+        pnl_by_cat: dict[str, tuple[float, float]] = {}
+        for p in conn["positions"].find({"status": "closed"}):
+            m = conn["markets"].find_one({"_id": p["market_id"]})
+            cat = ((m.get("category") if m else None) or "uncategorised").lower()
+            cur_pnl, cur_not = pnl_by_cat.get(cat, (0.0, 0.0))
+            pnl_by_cat[cat] = (
+                cur_pnl + float(p.get("pnl") or 0.0),
+                cur_not + float(p.get("notional_in") or 0.0),
+            )
 
         total_pnl = sum(p for p, _ in pnl_by_cat.values())
         total_notional = sum(n for _, n in pnl_by_cat.values())
