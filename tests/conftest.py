@@ -12,37 +12,34 @@ from pathlib import Path
 
 # ---- env setup (runs before any agent imports) ----
 _TMP = Path(tempfile.mkdtemp(prefix="openclob-test-"))
-os.environ["AGENT_DB_PATH"] = str(_TMP / "test.db")
+os.environ["MONGO_DB_URL"] = "mongodb://localhost:27017"
+os.environ["MONGO_DB_NAME"] = "openclob_test"
 os.environ["AGENT_LOG_PATH"] = str(_TMP / "test.jsonl")
 os.environ.setdefault("AGENT_MODE", "paper")
 os.environ.setdefault("AGENT_BANKROLL", "50")
 os.environ.setdefault("AGENT_PER_MARKET_CAP", "2")
 os.environ.setdefault("AGENT_CATEGORIES", "geopolitics,world,politics")
 
+import mongomock  # noqa: E402
 import pytest  # noqa: E402
 
 from agent.store import db  # noqa: E402
 
 
-@pytest.fixture(autouse=True, scope="session")
-def _init_schema():
-    db.init_db(Path(os.environ["AGENT_DB_PATH"]))
-    yield
-
-
 @pytest.fixture(autouse=True)
-def _clean_breakers():
-    """Reset breaker state between tests so they don't bleed into each other."""
-    with db.connect() as conn:
-        conn.execute("DELETE FROM breaker_state")
+def _mongo(monkeypatch):
+    """Give every test a fresh in-memory MongoDB via mongomock."""
+    client = mongomock.MongoClient()
+    monkeypatch.setattr(db, "_client", client)
+    db.init_db()
     yield
+    client.drop_database("openclob_test")
 
 
 @pytest.fixture
-def fresh_db(tmp_path, monkeypatch):
-    p = tmp_path / "fresh.db"
-    monkeypatch.setenv("AGENT_DB_PATH", str(p))
-    import agent.config as cfg
-    cfg.settings = cfg.Settings()
-    db.init_db(p)
-    yield p
+def fresh_db(monkeypatch):
+    """A clean DB for a single test (mongomock is already per-test isolated)."""
+    client = mongomock.MongoClient()
+    monkeypatch.setattr(db, "_client", client)
+    db.init_db()
+    yield
