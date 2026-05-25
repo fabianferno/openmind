@@ -1,6 +1,9 @@
 # openmind
 **The prediction-market agent that shows its work — and proves it on-chain.**
 
+![Demo animation](https://i.ibb.co/jPyT54Np/Screen-Recording2026-05-25at10-56-53-PM-ezgif-com-video-to-gif-converter.gif)
+
+
 openmind reads the news, **builds a knowledge graph** of who and what moves a prediction
 market, reasons over that graph to a calibrated **+EV bet**, then **anchors its entire
 reasoning trace on Arc and settles in USDC**. Not a black box — a glass one.
