@@ -1,5 +1,4 @@
 # openmind
-
 **The prediction-market agent that shows its work — and proves it on-chain.**
 
 openmind reads the news, **builds a knowledge graph** of who and what moves a prediction
