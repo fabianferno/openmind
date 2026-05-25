@@ -33,8 +33,12 @@ openmind makes the reasoning the product:
 3. **Proves it on Arc.** Canonicalises the full reasoning trace, hashes it (sha256), **anchors the
    hash on Arc**, and **settles USDC**. Anyone re-hashes the trace in-browser and matches it to the
    chain. A glass box, not a black box.
+4. **Lets you sign it yourself.** A header toggle switches between **demo mode** (the server wallet
+   signs) and **personal mode** — where you log in, get an **embedded wallet on Arc** (Privy, no seed
+   phrase), top it up from the **Circle faucet**, and **sign the anchor + USDC settle from your own
+   wallet** in-browser. The ledger attributes those on-chain txns to you. Gas is USDC.
 
-Runs on **Amazon Nova** (Bedrock) — a full analysis costs ~**$0.015**.
+Runs on **Amazon Nova Lite** (Bedrock) — a full analysis costs ~**$0.015** (~$0.008 / decision).
 
 ---
 
@@ -67,9 +71,11 @@ node and wires itself together; right — evidence streams in.*
 > it decided what to believe and how much to bet."
 
 **[2:05–2:40] — Settle + anchor on Arc (the proof).**
-*Screen: the on-chain panel — USDC settled, trace anchored; click the arcscan link.*
+*Screen: the on-chain panel — USDC settled, trace anchored; click the arcscan link. (Optional: flip
+the header toggle to **personal**, log in, and sign the same anchor from your own embedded wallet.)*
 > "Now the part nobody else does. It settles USDC on Arc, and it anchors a hash of the entire
-> reasoning trace on-chain — for about a cent, paid in USDC. Here's the real transaction on Arc."
+> reasoning trace on-chain — for about a cent, paid in USDC. Here's the real transaction on Arc. And
+> if I flip to personal mode, *I* sign it — from my own wallet, gas in USDC, no server key involved."
 
 **[2:40–3:00] — Verify + autonomy + close.**
 *Screen: Verify page → "✓ Verified" (re-hash matches). Quick cut to the Autonomous page running.*
@@ -78,7 +84,8 @@ node and wires itself together; right — evidence streams in.*
 > settling, no human in the loop. openmind: reasoning you can verify."
 
 **Fallbacks for the recording:** use ▶ replay (deterministic, no API latency); if the live API is
-down, the seeded markets still play the full sequence with their real arcscan links.
+down, the seeded markets still play the full sequence with their real arcscan links. Nav: **Terminal**
+(pick/run), **Autonomous** (`/auto`), **Ledger** (`/portfolio`, every txn clickable to arcscan).
 
 ---
 
@@ -89,14 +96,15 @@ down, the seeded markets still play the full sequence with their real arcscan li
 | Weight | Criterion | Assessment | Score |
 |---|---|---|---|
 | **30%** | **Agentic Sophistication** | Strong. Autonomous end-to-end: ontology design → graph extraction → search → graph-driven reasoning → Kelly sizing → execution → on-chain settlement. The `/auto` page and `agent cycle`/`loop` show full autonomy (no human market-pick). | **8.5/10** |
-| **30%** | **Traction** | Honest weak spot. Real, quantifiable **on-chain volume on Arc** (dozens of anchored reasoning traces + USDC settlements during the window — see `TRACTION.md`), a live deployed app, and a public repo. What we lack is a real *user* base (final-window build). | **4/10** |
-| **20%** | **Circle / Arc tooling** | Solid baseline: real USDC settlement + trace anchoring on Arc testnet, gas paid in USDC, arcscan-verifiable. Stretch (documented, not done): Circle Wallets SDK / USYC treasury yield. | **6.5/10** |
+| **30%** | **Traction** | Honest weak spot, but improved. Real, quantifiable **on-chain volume on Arc** (**40 real testnet txns: 30 anchored traces + 10 USDC settlements** across 26 markets — see `TRACTION.md`), a live deployed app, and a public repo. **Personal mode** now gives any visitor a real path to *their own* verifiable txns (log in → embedded wallet → faucet → sign). What we still lack is an organic user base (final-window build). | **4.5/10** |
+| **20%** | **Circle / Arc tooling** | Now a strength. Real USDC settlement + trace anchoring on Arc testnet, **gas paid in USDC**, arcscan-verifiable — plus **user-signed on-chain flow**: embedded wallets on Arc, **Circle USDC faucet** onboarding, client-signed USDC ERC-20 settle. (Honest: embedded wallets are via **Privy**, not the Circle Wallets SDK; USYC treasury yield remains a documented stretch.) | **7.5/10** |
 | **20%** | **Innovation** | Strong. Verifiable reasoning traces on-chain is *their own* research angle #1; GraphRAG applied to prediction-market forecasting + the "glass box" thesis is genuinely novel. | **8.5/10** |
 
 **Where we win:** innovation + agency (50% of the score) are our strengths, and they're real, not
-slideware. **Where we're capped:** traction — we can't manufacture a user base overnight, so a
-*grand* prize is a stretch; a **Standout Team** award and an outside shot at a 3rd-tier grand prize
-are the realistic targets.
+slideware. **Where we're capped:** traction — we can't manufacture an organic user base overnight, so
+a *grand* prize is a stretch; a **Standout Team** award and an outside shot at a 3rd-tier grand prize
+are the realistic targets. Personal mode narrows the gap by letting judges *become* the traction —
+each can connect a wallet and produce a verifiable on-chain decision themselves.
 
 ## 6. Is the product practical / does it make sense?
 
@@ -113,6 +121,10 @@ are the realistic targets.
   that.
 - **Clear path to a real product:** agent-as-builder (earn USDC builder fees per recommended fill),
   a public "verified reasoning" feed, and markets *on* which reasoning patterns are most profitable.
+- **A real user surface, not just a demo.** Personal mode means a user owns the wallet, the gas, and
+  the signature — the same flow a production "bring-your-own-wallet" product would ship. State is
+  persisted in MongoDB (graph runs, trace blobs, on-chain anchors), so each user's decisions and
+  attributed txns survive and feed calibration.
 
 **Caveats to own (don't hide them):** the symbolic USDC settlement is a stake/fee, not real PnL
 (it's paper trading); the live link depends on the API being hosted; the demo's "pick a market" is
@@ -133,12 +145,23 @@ human-initiated while the autonomous loop is the truly hands-off mode.
   component, bounded by hard limits it cannot bypass.
 - **"What's the business model?"** Polymarket-style builder codes: the agent earns USDC builder fees
   on fills it recommends — attribution on-chain, no custody.
+- **"How would real users transact, not just your agent?"** Personal mode: a visitor logs in, gets an
+  embedded wallet on Arc, funds it from the Circle faucet, and signs the anchor + USDC settle from
+  their own wallet — the server never holds their key. The ledger attributes those txns to them.
+- **"Is the wallet flow Circle Wallets?"** Honest answer: embedded wallets are via **Privy** (fastest
+  to ship in the window), but everything settles in **USDC on Arc with gas in USDC**, onboarded
+  through the **Circle faucet** — swapping in the Circle Wallets SDK is a drop-in next step.
 
 ## 8. Numbers + links to cite
 
-- Model: Amazon Nova (Bedrock) · cost ≈ **$0.015 / full analysis**.
-- On-chain: Arc testnet (chain id `5042002`), gas in USDC. Live tx counts in `TRACTION.md`.
-- Verify flow: client-side sha256 re-hash matches the on-chain anchor.
+- Model: **Amazon Nova Lite** (Bedrock) · cost ≈ **$0.015 / full analysis** (~$0.008 / decision);
+  **$0.25** total LLM spend for all traction below.
+- On-chain (Arc testnet, chain id `5042002`, gas in USDC): **40 real txns** — **30 anchored traces**,
+  **10 USDC settlements** (~0.10 USDC), across **26 markets** / **30 autonomous decisions**. Full
+  list + arcscan links in `TRACTION.md`. Agent wallet `0x5a09e3eC3EFDD91205Cbb097142a4f4dCEFc7f02`.
+- Personal mode: embedded wallets via Privy on Arc, USDC faucet at faucet.circle.com, USDC as gas;
+  user-signed anchor + ERC-20 USDC settle (USDC `0x3600…0000`).
+- Verify flow: client-side sha256 re-hash matches the on-chain anchor (`/verify/<decisionId>`).
 - Live app: https://openthemind.vercel.app · Repo: https://github.com/fabianferno/openclob
 
 ## 9. Submission checklist
