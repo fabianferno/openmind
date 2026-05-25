@@ -78,14 +78,26 @@ function AutoCard({ it }: { it: AutoItem }) {
             {running ? "working…" : "—"}
           </span>
         )}
-        {it.decision && (
-          <Link
-            href={`/verify/${it.decision.decision_id}`}
-            className="mono text-[10px] uppercase tracking-[0.12em] text-cyan hover:text-signal"
-          >
-            verify →
-          </Link>
-        )}
+        <div className="flex items-center gap-3">
+          {it.market.market_url && (
+            <a
+              href={it.market.market_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-cyan"
+            >
+              market ↗
+            </a>
+          )}
+          {it.decision && (
+            <Link
+              href={`/verify/${it.decision.decision_id}`}
+              className="mono text-[10px] uppercase tracking-[0.12em] text-cyan hover:text-signal"
+            >
+              verify →
+            </Link>
+          )}
+        </div>
       </div>
     </motion.div>
   );

@@ -27,6 +27,29 @@ log = get_logger(__name__)
 EmitFn = Callable[[str, dict[str, Any]], None]
 
 
+def venue_market_url(m: dict[str, Any]) -> str | None:
+    """Public URL of the market on its venue (so users can see the placed bet)."""
+    import json as _json
+
+    raw = m.get("raw")
+    if isinstance(raw, str):
+        try:
+            raw = _json.loads(raw)
+        except Exception:  # noqa: BLE001
+            raw = None
+    venue = m.get("venue")
+    if venue == "manifold":
+        if isinstance(raw, dict) and raw.get("url"):
+            return raw["url"]
+        if isinstance(raw, dict) and raw.get("creatorUsername") and raw.get("slug"):
+            return f"https://manifold.markets/{raw['creatorUsername']}/{raw['slug']}"
+        return None
+    if venue == "polymarket":
+        slug = raw.get("slug") if isinstance(raw, dict) else None
+        return f"https://polymarket.com/event/{slug}" if slug else None
+    return None
+
+
 def _market_summary(m: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": m.get("id"),
@@ -36,6 +59,7 @@ def _market_summary(m: dict[str, Any]) -> dict[str, Any]:
         "end_date": m.get("end_date"),
         "price_yes": m.get("last_price_yes"),
         "volume_24h": m.get("volume_24h"),
+        "market_url": venue_market_url(m),
     }
 
 
@@ -93,11 +117,13 @@ def run_analysis(
                 target_price=plan.target_price, decision_id=plan.decision_id,
             )
             executed = {"status": "filled", "venue": market.get("venue"),
-                        "side": plan.side, "usd_size": plan.usd_size}
+                        "side": plan.side, "usd_size": plan.usd_size,
+                        "market_url": venue_market_url(market)}
         except Exception as e:  # noqa: BLE001 — paper execution is best-effort in the demo
             log.warning("analyze.execute_failed", market_id=market["id"], error=str(e))
             executed = {"status": "simulated", "venue": market.get("venue"),
-                        "side": plan.side, "usd_size": plan.usd_size, "note": str(e)[:120]}
+                        "side": plan.side, "usd_size": plan.usd_size, "note": str(e)[:120],
+                        "market_url": venue_market_url(market)}
         emit("executed", executed)
 
         settled = arc.transfer_usdc(

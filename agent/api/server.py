@@ -77,11 +77,13 @@ def health() -> dict[str, Any]:
 
 @app.get("/api/markets")
 def markets(limit: int = 24) -> dict[str, Any]:
+    from agent.api.analyze import venue_market_url
+
     seeded = set(seeds.list_seeds())
     with db.connect() as conn:
         rows = conn.execute(
             """
-            SELECT id, venue, question, category, end_date, last_price_yes, volume_24h, resolved
+            SELECT id, venue, question, category, end_date, last_price_yes, volume_24h, resolved, raw
               FROM markets
              WHERE resolved = 0
              ORDER BY COALESCE(volume_24h, 0) DESC
@@ -92,6 +94,8 @@ def markets(limit: int = 24) -> dict[str, Any]:
     out = []
     for r in rows:
         d = {k: r[k] for k in r.keys()}
+        d["market_url"] = venue_market_url(d)
+        d.pop("raw", None)
         d["seeded"] = any(s.startswith(d["id"].replace(":", "_")) for s in seeded)
         out.append(d)
     return {"markets": out, "seeds": list(seeded)}
@@ -194,10 +198,12 @@ async def _auto_stream(n: int):
             markets = _pick_open_markets(n)
             top("auto_start", {"n": len(markets)})
             for idx, m in enumerate(markets):
+                from agent.api.analyze import venue_market_url
                 top("auto_pick", {
                     "index": idx,
                     "market": {"id": m["id"], "question": m["question"],
-                               "category": m.get("category"), "price_yes": m.get("last_price_yes")},
+                               "category": m.get("category"), "price_yes": m.get("last_price_yes"),
+                               "market_url": venue_market_url(m)},
                 })
 
                 def emit(ev: str, data: dict[str, Any], _i: int = idx) -> None:

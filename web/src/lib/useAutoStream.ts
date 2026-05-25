@@ -6,7 +6,13 @@ import type { Decision, OnchainTx } from "./types";
 
 export type AutoItem = {
   index: number;
-  market: { id: string; question: string; category: string | null; price_yes: number | null };
+  market: {
+    id: string;
+    question: string;
+    category: string | null;
+    price_yes: number | null;
+    market_url?: string | null;
+  };
   entityTypes: string[];
   nodeCount: number;
   edgeCount: number;

@@ -78,6 +78,19 @@ export default function AnalyzePage({ params }: { params: Promise<{ id: string }
                 <span className="text-muted">YES {(market.last_price_yes * 100).toFixed(0)}%</span>
               </>
             )}
+            {market?.market_url && (
+              <>
+                <span>·</span>
+                <a
+                  href={market.market_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-cyan transition-colors hover:text-signal"
+                >
+                  view on {market.venue} ↗
+                </a>
+              </>
+            )}
           </div>
         </div>
 
@@ -150,6 +163,27 @@ export default function AnalyzePage({ params }: { params: Promise<{ id: string }
 
         <div className="flex flex-col gap-4">
           <DecisionCard decision={state.decision} />
+          {state.executed && (
+            <div className="panel flex items-center justify-between p-3">
+              <div className="mono text-[11px] uppercase tracking-[0.12em] text-faint">
+                bet{" "}
+                <span className={state.executed.status === "filled" ? "text-signal" : "text-amber"}>
+                  {String(state.executed.status)}
+                </span>{" "}
+                · {String(state.executed.side ?? "")} ${String(state.executed.usd_size ?? "")}
+              </div>
+              {typeof state.executed.market_url === "string" && (
+                <a
+                  href={state.executed.market_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mono text-[10px] uppercase tracking-[0.12em] text-cyan hover:text-signal"
+                >
+                  view on {String(state.executed.venue ?? "venue")} ↗
+                </a>
+              )}
+            </div>
+          )}
           <OnchainPanel
             settled={state.settled}
             anchored={state.anchored}

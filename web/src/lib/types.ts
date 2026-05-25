@@ -6,6 +6,7 @@ export type Market = {
   end_date: string | null;
   last_price_yes: number | null;
   volume_24h: number | null;
+  market_url?: string | null;
   seeded?: boolean;
 };
 
