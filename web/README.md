@@ -16,6 +16,29 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Environment
+
+Create `.env.local` (not committed):
+
+```bash
+NEXT_PUBLIC_API_BASE=http://localhost:8000   # the agent FastAPI sidecar
+NEXT_PUBLIC_PRIVY_APP_ID=                     # Privy app id (auth). If unset, the app runs ungated.
+```
+
+## Authentication & demo mode (Privy)
+
+Actions that touch the agent (discover, run live, run autonomously) require login via
+[Privy](https://privy.io). A **demo-mode** toggle in the header controls who signs the
+on-chain Arc txns:
+
+- **Demo mode (default, ON):** the server wallet signs the trace anchor + USDC settle —
+  the existing behavior, nothing changes.
+- **Personal mode (OFF):** the authenticated user's Privy embedded wallet signs those txns
+  client-side on Arc, and the resulting tx hashes are recorded via
+  `POST /api/anchors/record`. The wallet needs Arc-testnet USDC (gas is paid in USDC on Arc).
+
+The server never holds the user's key — personal-mode signing always happens in the browser.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

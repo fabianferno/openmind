@@ -68,9 +68,18 @@ def run_analysis(
     *,
     emit: EmitFn,
     execute: bool = True,
+    mode: str = "demo",
+    signer: str | None = None,
 ) -> dict[str, Any]:
-    """Run the full analyze→decide→anchor→settle flow for one market."""
+    """Run the full analyze→decide→anchor→settle flow for one market.
+
+    mode="demo" (default): the server wallet signs the Arc anchor + settle txns.
+    mode="personal" (with a `signer` address): the server does NOT sign — it emits
+    `settle_request` / `anchor_request` so the browser can sign with the user's own
+    Privy wallet, then report the tx hashes back via POST /api/anchors/record.
+    """
     arc = get_arc()
+    personal = mode == "personal" and bool(signer)
     emit("market", _market_summary(market))
 
     plan = entry_mod.plan_entry(market, relaxed=True, emit=emit)
@@ -126,34 +135,53 @@ def run_analysis(
                         "market_url": venue_market_url(market)}
         emit("executed", executed)
 
-        settled = arc.transfer_usdc(
-            arc.treasury(), settings.arc_settle_usdc, decision_id=plan.decision_id
-        )
-        with db.connect() as conn:
-            db.record_anchor(conn, {
-                "decision_id": plan.decision_id, "market_id": market["id"], "kind": "settle",
-                "tx_hash": settled["tx_hash"], "explorer_url": settled.get("explorer_url"),
-                "usdc_amount": settings.arc_settle_usdc, "to_address": settled.get("to"),
-                "mocked": settled.get("mocked"),
+        if personal:
+            # hand the symbolic settle to the browser to sign with the user's wallet
+            emit("settle_request", {
+                "decision_id": plan.decision_id, "market_id": market["id"],
+                "treasury": settings.arc_treasury_address or signer,
+                "usdc_address": settings.arc_usdc_address,
+                "amount_usdc": settings.arc_settle_usdc, "decimals": 6,
+                "chain_id": settings.arc_chain_id,
             })
-        emit("settled", {**settled, "usdc_amount": settings.arc_settle_usdc})
+        else:
+            settled = arc.transfer_usdc(
+                arc.treasury(), settings.arc_settle_usdc, decision_id=plan.decision_id
+            )
+            with db.connect() as conn:
+                db.record_anchor(conn, {
+                    "decision_id": plan.decision_id, "market_id": market["id"], "kind": "settle",
+                    "tx_hash": settled["tx_hash"], "explorer_url": settled.get("explorer_url"),
+                    "usdc_amount": settings.arc_settle_usdc, "to_address": settled.get("to"),
+                    "mocked": settled.get("mocked"),
+                })
+            emit("settled", {**settled, "usdc_amount": settings.arc_settle_usdc})
 
     # anchor the reasoning-trace hash on Arc (always — the reasoning is the product)
-    anchor = arc.anchor(thash, decision_id=plan.decision_id)
-    with db.connect() as conn:
-        db.record_anchor(conn, {
-            "decision_id": plan.decision_id, "market_id": market["id"], "kind": "anchor",
-            "trace_hash": thash, "tx_hash": anchor["tx_hash"],
-            "explorer_url": anchor.get("explorer_url"), "mocked": anchor.get("mocked"),
+    anchor = None
+    if personal:
+        emit("anchor_request", {
+            "decision_id": plan.decision_id, "market_id": market["id"], "trace_hash": thash,
+            "to": settings.arc_anchor_contract or signer, "chain_id": settings.arc_chain_id,
         })
-    emit("anchored", {**anchor, "trace_hash": thash})
+    else:
+        anchor = arc.anchor(thash, decision_id=plan.decision_id)
+        with db.connect() as conn:
+            db.record_anchor(conn, {
+                "decision_id": plan.decision_id, "market_id": market["id"], "kind": "anchor",
+                "trace_hash": thash, "tx_hash": anchor["tx_hash"],
+                "explorer_url": anchor.get("explorer_url"), "mocked": anchor.get("mocked"),
+            })
+        emit("anchored", {**anchor, "trace_hash": thash})
 
     emit("complete", {
         "action": plan.action, "decision_id": plan.decision_id, "trace_hash": thash,
         "anchored": True, "settled": settled is not None,
+        "personal": personal,
     })
     return {
         "action": plan.action, "decision_id": plan.decision_id, "side": plan.side,
         "p_yes": plan.p_yes, "edge": plan.edge, "trace_hash": thash,
-        "anchor_tx": anchor["tx_hash"], "settle_tx": settled["tx_hash"] if settled else None,
+        "anchor_tx": anchor["tx_hash"] if anchor else None,
+        "settle_tx": settled["tx_hash"] if settled else None,
     }

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Pill, SectionLabel } from "@/components/ui";
+import { useRequireAuth } from "@/lib/auth";
 import { fmtPct, truncHash } from "@/lib/utils";
 import { type AutoItem, useAutoStream } from "@/lib/useAutoStream";
 
@@ -105,6 +106,7 @@ function AutoCard({ it }: { it: AutoItem }) {
 
 export default function AutoPage() {
   const { items, status, start } = useAutoStream();
+  const gate = useRequireAuth();
   const running = status === "running";
   const traded = items.filter((i) => i.decision?.action.startsWith("enter")).length;
   const anchored = items.filter((i) => i.anchored).length;
@@ -124,7 +126,7 @@ export default function AutoPage() {
           </p>
         </div>
         <button
-          onClick={() => start(4)}
+          onClick={() => gate(() => start(4))}
           disabled={running}
           className="mono border border-signal/50 bg-signal/10 px-5 py-2 text-[11px] uppercase tracking-[0.12em] text-signal transition-colors hover:bg-signal/20 disabled:opacity-40"
         >

@@ -9,6 +9,7 @@ import { OnchainPanel } from "@/components/onchain-panel";
 import { OntologyPanel } from "@/components/ontology-panel";
 import { Pill } from "@/components/ui";
 import { api } from "@/lib/api";
+import { useRequireAuth } from "@/lib/auth";
 import type { Market } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { type Phase, useAnalyzeStream } from "@/lib/useAnalyzeStream";
@@ -34,6 +35,7 @@ export default function AnalyzePage({ params }: { params: Promise<{ id: string }
   const { id } = use(params);
   const marketId = decodeURIComponent(id);
   const { state, start, running } = useAnalyzeStream(marketId);
+  const gate = useRequireAuth();
   const [seedAvailable, setSeedAvailable] = useState(false);
   const [premarket, setPremarket] = useState<Market | null>(null);
 
@@ -109,7 +111,7 @@ export default function AnalyzePage({ params }: { params: Promise<{ id: string }
             </button>
           )}
           <button
-            onClick={() => start(false)}
+            onClick={() => gate(() => start(false))}
             disabled={running}
             className="mono border border-signal/50 bg-signal/10 px-4 py-1.5 text-[11px] uppercase tracking-[0.12em] text-signal transition-colors hover:bg-signal/20 disabled:opacity-40"
           >

@@ -266,9 +266,18 @@ def all_positions(conn: Database, limit: int = 200) -> list[dict[str, Any]]:
     return [_row(r) for r in cur]
 
 
-def positions_with_market(conn: Database, limit: int = 200) -> list[dict[str, Any]]:
-    """Positions newest-first, each enriched with its market `question` and `venue`."""
-    rows = [_row(r) for r in conn["positions"].find().sort("_id", DESCENDING).limit(limit)]
+def positions_with_market(
+    conn: Database, limit: int = 200, wallet: str | None = None
+) -> list[dict[str, Any]]:
+    """Positions newest-first, each enriched with its market `question` and `venue`.
+
+    `wallet` restricts to positions whose entry decision was anchored on-chain from
+    that address (personal mode); omitted → the full shared agent record.
+    """
+    q: dict[str, Any] = {}
+    if wallet:
+        q = {"entry_decision_id": {"$in": decision_ids_for_wallet(conn, wallet)}}
+    rows = [_row(r) for r in conn["positions"].find(q).sort("_id", DESCENDING).limit(limit)]
     ids = list({r["market_id"] for r in rows})
     markets = {m["_id"]: m for m in conn["markets"].find({"_id": {"$in": ids}})}
     for r in rows:
@@ -561,6 +570,9 @@ def record_anchor(conn: Database, a: dict[str, Any]) -> int:
         "explorer_url": a.get("explorer_url"),
         "usdc_amount": a.get("usdc_amount"),
         "to_address": a.get("to_address"),
+        # signer of a personal-mode txn (lowercased for case-insensitive matching);
+        # null for demo-mode txns signed by the server wallet.
+        "from_address": (a.get("from_address") or "").lower() or None,
         "network": a.get("network", "arc-testnet"),
         "mocked": 1 if a.get("mocked") else 0,
         "created_at": _now(),
@@ -573,6 +585,19 @@ def anchors_for_decision(conn: Database, decision_id: int) -> list[dict[str, Any
     return [_row(r) for r in cur]
 
 
-def recent_anchors(conn: Database, limit: int = 50) -> list[dict[str, Any]]:
-    cur = conn["onchain_anchors"].find().sort("_id", DESCENDING).limit(limit)
+def recent_anchors(
+    conn: Database, limit: int = 50, wallet: str | None = None
+) -> list[dict[str, Any]]:
+    """Newest-first anchors. `wallet` restricts to txns signed from that address
+    (personal mode); omitted → the full shared ledger."""
+    q = {"from_address": wallet.lower()} if wallet else {}
+    cur = conn["onchain_anchors"].find(q).sort("_id", DESCENDING).limit(limit)
     return [_row(r) for r in cur]
+
+
+def decision_ids_for_wallet(conn: Database, wallet: str) -> list[int]:
+    """Distinct decision ids whose on-chain txns were signed from `wallet`."""
+    ids = conn["onchain_anchors"].distinct(
+        "decision_id", {"from_address": wallet.lower(), "decision_id": {"$ne": None}}
+    )
+    return [int(i) for i in ids]

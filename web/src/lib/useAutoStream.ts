@@ -1,8 +1,16 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { API_BASE } from "./api";
-import type { Decision, OnchainTx } from "./types";
+import { api } from "./api";
+import { useAuth } from "./auth";
+import { useDemoMode } from "./demo-mode";
+import { useOnchainExecutor } from "./useOnchainExecutor";
+import type {
+  AnchorRequest,
+  Decision,
+  OnchainTx,
+  SettleRequest,
+} from "./types";
 
 export type AutoItem = {
   index: number;
@@ -27,6 +35,9 @@ export function useAutoStream() {
   const [items, setItems] = useState<AutoItem[]>([]);
   const [status, setStatus] = useState<"idle" | "running" | "done" | "error">("idle");
   const esRef = useRef<EventSource | null>(null);
+  const { demoMode } = useDemoMode();
+  const { address } = useAuth();
+  const { anchor, settle } = useOnchainExecutor();
 
   const patch = (index: number, fn: (it: AutoItem) => AutoItem) =>
     setItems((arr) => arr.map((it) => (it.index === index ? fn(it) : it)));
@@ -35,7 +46,13 @@ export function useAutoStream() {
     esRef.current?.close();
     setItems([]);
     setStatus("running");
-    const es = new EventSource(`${API_BASE}/api/auto?n=${n}`);
+    const personal = !demoMode && Boolean(address);
+    const es = new EventSource(
+      api.autoUrl(n, {
+        mode: personal ? "personal" : "demo",
+        wallet: personal ? address : null,
+      }),
+    );
     esRef.current = es;
 
     es.addEventListener("auto_pick", (e) => {
@@ -74,6 +91,16 @@ export function useAutoStream() {
             return { ...it, settled: data as OnchainTx };
           case "anchored":
             return { ...it, anchored: data as OnchainTx, phase: "anchored" };
+          case "settle_request":
+            settle(data as SettleRequest)
+              .then((tx) => patch(index, (x) => ({ ...x, settled: tx })))
+              .catch((e) => patch(index, (x) => ({ ...x, error: `settle: ${e.message ?? e}` })));
+            return { ...it, phase: "settling" };
+          case "anchor_request":
+            anchor(data as AnchorRequest)
+              .then((tx) => patch(index, (x) => ({ ...x, anchored: tx, phase: "anchored" })))
+              .catch((e) => patch(index, (x) => ({ ...x, error: `anchor: ${e.message ?? e}` })));
+            return { ...it, phase: "anchoring" };
           case "complete":
             return { ...it, phase: "done" };
           default:
@@ -95,7 +122,7 @@ export function useAutoStream() {
       setStatus((s) => (s === "done" ? s : "error"));
       es.close();
     };
-  }, []);
+  }, [demoMode, address, anchor, settle]);
 
   return { items, status, start };
 }

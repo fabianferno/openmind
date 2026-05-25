@@ -58,6 +58,7 @@ export type Anchor = {
   tx_hash: string;
   explorer_url: string | null;
   usdc_amount: number | null;
+  from_address: string | null; // signer wallet for personal-mode txns; null in demo mode
   mocked: number;
   created_at: string;
 };
@@ -81,3 +82,21 @@ export type AnalyzeEvent =
   | { event: "done"; data: Record<string, unknown> };
 
 export type Citation = { url: string; title: string; published_date: string | null };
+
+// Personal-mode: server asks the browser to sign these on-chain txns itself.
+export type AnchorRequest = {
+  decision_id: number;
+  market_id: string;
+  trace_hash: string;
+  to: string; // anchor contract, or the user's own address for a self-send
+  chain_id: number;
+};
+export type SettleRequest = {
+  decision_id: number;
+  market_id: string;
+  treasury: string;
+  usdc_address: string;
+  amount_usdc: number;
+  decimals: number;
+  chain_id: number;
+};

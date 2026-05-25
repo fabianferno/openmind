@@ -5,25 +5,31 @@ import { MarketCard } from "@/components/market-card";
 import Bd1Hologram from "@/components/hologram/Bd1Hologram";
 import { SectionLabel, Stat } from "@/components/ui";
 import { api, type MarketsResp, type MetricsResp } from "@/lib/api";
+import { useRequireAuth } from "@/lib/auth";
 import type { Market } from "@/lib/types";
 
 export default function Home() {
+  const gate = useRequireAuth();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [metrics, setMetrics] = useState<MetricsResp | null>(null);
   const [loading, setLoading] = useState(true);
   const [discovering, setDiscovering] = useState(false);
 
   const load = () =>
-    api.markets(18).then((r: MarketsResp) => setMarkets(r.markets)).finally(() => setLoading(false));
+    api
+      .markets(18)
+      .then((r: MarketsResp) => setMarkets(r.markets))
+      .catch(() => { }) // backend sidecar may be down — show the empty state, don't throw
+      .finally(() => setLoading(false));
 
   useEffect(() => {
     load();
-    api.metrics().then(setMetrics).catch(() => {});
+    api.metrics().then(setMetrics).catch(() => { });
   }, []);
 
   const discover = async () => {
     setDiscovering(true);
-    await api.discover().catch(() => {});
+    await api.discover().catch(() => { });
     await load();
     setDiscovering(false);
   };
@@ -33,14 +39,14 @@ export default function Home() {
       {/* hero */}
       <section className="relative overflow-hidden border-b border-line">
         <div className="grid-bg pointer-events-none absolute inset-0 opacity-50" />
-        <div className="relative mx-auto grid max-w-[1400px] items-center gap-10 px-5 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
+        <div className="relative mx-auto grid max-w-[1400px] items-center gap-10 px-5  lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           <div>
             <div className="mono mb-6 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-faint">
               <span className="signal-dot inline-block size-1.5 rounded-full bg-signal" />
               prediction-market trader intelligence · settled on arc
             </div>
             <h1 className="serif max-w-4xl text-6xl leading-[0.95] tracking-tight md:text-7xl">
-              Reasoning you can
+              Reasoning <br />you can
               <span className="text-signal glow-signal"> verify.</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
@@ -72,7 +78,7 @@ export default function Home() {
               Renders on a transparent canvas; the soft radial mask only feathers the
               faint dot-grid plane edges so nothing reads as a rectangle. */}
           <div
-            className="relative h-[340px] w-full sm:h-[440px] lg:h-[580px]"
+            className="relative h-full w-full sm:h-[440px] lg:h-[580px]"
             style={{
               maskImage:
                 "radial-gradient(70% 70% at 50% 50%, #000 45%, transparent 88%)",
@@ -90,7 +96,7 @@ export default function Home() {
         <div className="mb-6 flex items-center justify-between">
           <SectionLabel index="◆" className="flex-1">Live markets — pick one to analyze</SectionLabel>
           <button
-            onClick={discover}
+            onClick={() => gate(discover)}
             disabled={discovering}
             className="mono ml-4 border border-line-bright px-3 py-1.5 text-[11px] uppercase tracking-[0.12em] text-muted transition-colors hover:border-signal/50 hover:text-signal disabled:opacity-50"
           >

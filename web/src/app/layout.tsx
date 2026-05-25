@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Instrument_Serif, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
+import { Providers } from "@/components/providers";
+import { FaucetPrompt } from "@/components/faucet-prompt";
 import "./globals.css";
 
 const instrument = Instrument_Serif({
@@ -54,8 +56,11 @@ export default function RootLayout({
       <body
         className={`${instrument.variable} ${plexMono.variable} ${plexSans.variable} grain scanlines min-h-screen antialiased`}
       >
-        <SiteHeader />
-        <main className="relative z-10">{children}</main>
+        <Providers>
+          <SiteHeader />
+          <FaucetPrompt />
+          <main className="relative z-10">{children}</main>
+        </Providers>
       </body>
     </html>
   );

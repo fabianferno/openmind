@@ -14,6 +14,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 from agent.api import seeds
@@ -115,7 +116,7 @@ async def _replay_stream(events: list[dict[str, Any]]):
     yield _sse_format("done", {})
 
 
-async def _live_stream(market: dict[str, Any]):
+async def _live_stream(market: dict[str, Any], *, mode: str = "demo", signer: str | None = None):
     queue: asyncio.Queue = asyncio.Queue()
     loop = asyncio.get_running_loop()
 
@@ -124,7 +125,7 @@ async def _live_stream(market: dict[str, Any]):
 
     def worker() -> None:
         try:
-            run_analysis(market, emit=emit)
+            run_analysis(market, emit=emit, mode=mode, signer=signer)
         except Exception as e:  # noqa: BLE001
             log.warning("analyze.worker_failed", error=str(e))
             loop.call_soon_threadsafe(
@@ -147,7 +148,9 @@ async def _live_stream(market: dict[str, Any]):
 
 
 @app.get("/api/analyze/{market_id:path}")
-async def analyze(market_id: str, replay: bool = False) -> EventSourceResponse:
+async def analyze(
+    market_id: str, replay: bool = False, mode: str = "demo", wallet: str | None = None
+) -> EventSourceResponse:
     if replay:
         events = seeds.load_seed(market_id)
         if events is None:
@@ -158,7 +161,7 @@ async def analyze(market_id: str, replay: bool = False) -> EventSourceResponse:
         market = db.get_market(conn, market_id)
     if not market:
         raise HTTPException(404, f"unknown market {market_id}")
-    return EventSourceResponse(_live_stream(market))
+    return EventSourceResponse(_live_stream(market, mode=mode, signer=wallet))
 
 
 # ---------- autonomous mode (SSE) ----------
@@ -168,7 +171,7 @@ def _pick_open_markets(n: int) -> list[dict[str, Any]]:
         return db.list_tradeable_markets(conn, n)
 
 
-async def _auto_stream(n: int):
+async def _auto_stream(n: int, *, mode: str = "demo", signer: str | None = None):
     queue: asyncio.Queue = asyncio.Queue()
     loop = asyncio.get_running_loop()
 
@@ -195,7 +198,7 @@ async def _auto_stream(n: int):
                     )
 
                 try:
-                    run_analysis(m, emit=emit)
+                    run_analysis(m, emit=emit, mode=mode, signer=signer)
                 except Exception as e:  # noqa: BLE001
                     top("auto_error", {"index": idx, "message": str(e)})
         except Exception as e:  # noqa: BLE001
@@ -212,9 +215,11 @@ async def _auto_stream(n: int):
 
 
 @app.get("/api/auto")
-async def auto(n: int = 3) -> EventSourceResponse:
+async def auto(
+    n: int = 3, mode: str = "demo", wallet: str | None = None
+) -> EventSourceResponse:
     """Agent autonomously selects markets from its universe and trades them — no human pick."""
-    return EventSourceResponse(_auto_stream(min(max(n, 1), 8)))
+    return EventSourceResponse(_auto_stream(min(max(n, 1), 8), mode=mode, signer=wallet))
 
 
 # ---------- history reads ----------
@@ -264,9 +269,11 @@ def trace(decision_id: int) -> dict[str, Any]:
 
 
 @app.get("/api/portfolio")
-def portfolio() -> dict[str, Any]:
+def portfolio(wallet: str | None = None) -> dict[str, Any]:
+    """Shared agent record by default; pass `wallet` (personal mode) to restrict to
+    positions whose entry decision was anchored on-chain from that address."""
     with db.connect() as conn:
-        positions = db.positions_with_market(conn, 200)
+        positions = db.positions_with_market(conn, 200, wallet=wallet)
         open_pos = [p for p in positions if p["status"] == "open"]
         realized = sum(p["pnl"] or 0 for p in positions if p["status"] == "closed")
     return {
@@ -296,6 +303,44 @@ def metrics() -> dict[str, Any]:
 
 
 @app.get("/api/anchors")
-def anchors(limit: int = 50) -> dict[str, Any]:
+def anchors(limit: int = 50, wallet: str | None = None) -> dict[str, Any]:
+    """Full settlement log by default; pass `wallet` to show only txns you signed."""
     with db.connect() as conn:
-        return {"anchors": db.recent_anchors(conn, limit=limit)}
+        return {"anchors": db.recent_anchors(conn, limit=limit, wallet=wallet)}
+
+
+class AnchorRecordIn(BaseModel):
+    decision_id: int | None = None
+    market_id: str | None = None
+    kind: str
+    tx_hash: str
+    trace_hash: str | None = None
+    usdc_amount: float | None = None
+    to_address: str | None = None
+    from_address: str | None = None
+
+
+@app.post("/api/anchors/record")
+def record_anchor_tx(body: AnchorRecordIn) -> dict[str, Any]:
+    """Record a client-signed (personal-mode) Arc txn so it shows in the ledger.
+
+    Hackathon trust model: the reported hash is stored as-is, not re-verified on
+    Arc. For production, verify the tx exists, matches the trace hash / amount, and
+    was sent from the authenticated user's address before recording.
+    """
+    if body.kind not in ("anchor", "settle"):
+        raise HTTPException(400, "kind must be 'anchor' or 'settle'")
+    h = body.tx_hash if body.tx_hash.startswith("0x") else "0x" + body.tx_hash
+    explorer_url = f"{settings.arc_explorer_base}/tx/{h}"
+    with db.connect() as conn:
+        db.record_anchor(conn, {
+            "decision_id": body.decision_id, "market_id": body.market_id, "kind": body.kind,
+            "trace_hash": body.trace_hash, "tx_hash": h, "explorer_url": explorer_url,
+            "usdc_amount": body.usdc_amount, "to_address": body.to_address or body.from_address,
+            "from_address": body.from_address,  # signer → links this txn to the user's wallet
+            "mocked": False,
+        })
+    return {
+        "tx_hash": h, "explorer_url": explorer_url, "mocked": False, "kind": body.kind,
+        "network": "arc-testnet", "trace_hash": body.trace_hash, "usdc_amount": body.usdc_amount,
+    }

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, type HealthResp } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { AuthControls } from "@/components/auth-controls";
 
 const NAV = [
   { href: "/", label: "Terminal" },
@@ -16,9 +17,22 @@ const NAV = [
 export function SiteHeader() {
   const pathname = usePathname();
   const [health, setHealth] = useState<HealthResp | null>(null);
+  const [status, setStatus] = useState<"loading" | "ok" | "offline">("loading");
 
   useEffect(() => {
-    api.health().then(setHealth).catch(() => setHealth(null));
+    let alive = true;
+    const poll = () =>
+      api
+        .health()
+        .then((h) => alive && (setHealth(h), setStatus("ok")))
+        .catch(() => alive && (setHealth(null), setStatus("offline")));
+    poll();
+    // re-poll so the chip recovers once the backend comes up (no manual refresh)
+    const t = setInterval(poll, 10_000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
   }, []);
 
   return (
@@ -63,19 +77,40 @@ export function SiteHeader() {
             </span>
           )}
           <span className="mono flex items-center gap-2 border border-line px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]">
-            <span
-              className={cn(
-                "signal-dot inline-block size-1.5 rounded-full",
-                health?.arc.real ? "bg-signal" : "bg-amber",
-              )}
-            />
-            <span className={health?.arc.real ? "text-signal" : "text-amber"}>
-              {health?.arc.real ? "ARC TESTNET" : "ARC MOCK"}
-            </span>
+            {(() => {
+              // distinguish: backend unreachable vs. backend running in mock mode
+              const tone =
+                status === "offline"
+                  ? "text-danger"
+                  : health?.arc.real
+                    ? "text-signal"
+                    : "text-amber";
+              const dot =
+                status === "offline"
+                  ? "bg-danger"
+                  : health?.arc.real
+                    ? "bg-signal"
+                    : "bg-amber";
+              const label =
+                status === "loading"
+                  ? "ARC …"
+                  : status === "offline"
+                    ? "API OFFLINE"
+                    : health?.arc.real
+                      ? "ARC TESTNET"
+                      : "ARC MOCK";
+              return (
+                <>
+                  <span className={cn("signal-dot inline-block size-1.5 rounded-full", dot)} />
+                  <span className={tone}>{label}</span>
+                </>
+              );
+            })()}
             {health?.arc.usdc_balance != null && (
               <span className="text-faint">· {health.arc.usdc_balance.toFixed(2)} USDC</span>
             )}
           </span>
+          <AuthControls />
         </div>
       </div>
     </header>

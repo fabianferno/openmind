@@ -2,7 +2,11 @@
 
 import { useCallback, useRef, useState } from "react";
 import { api } from "./api";
+import { useAuth } from "./auth";
+import { useDemoMode } from "./demo-mode";
+import { useOnchainExecutor } from "./useOnchainExecutor";
 import type {
+  AnchorRequest,
   Citation,
   Decision,
   GraphEdge,
@@ -10,6 +14,7 @@ import type {
   Market,
   Ontology,
   OnchainTx,
+  SettleRequest,
 } from "./types";
 
 export type Phase =
@@ -58,6 +63,9 @@ const EMPTY: StreamState = {
 export function useAnalyzeStream(marketId: string) {
   const [state, setState] = useState<StreamState>(EMPTY);
   const esRef = useRef<EventSource | null>(null);
+  const { demoMode } = useDemoMode();
+  const { address } = useAuth();
+  const { anchor, settle } = useOnchainExecutor();
 
   const reset = useCallback(() => {
     esRef.current?.close();
@@ -69,7 +77,14 @@ export function useAnalyzeStream(marketId: string) {
     (replay = false) => {
       esRef.current?.close();
       setState({ ...EMPTY, phase: "connecting" });
-      const es = new EventSource(api.analyzeUrl(marketId, replay));
+      const personal = !demoMode && !replay && Boolean(address);
+      const es = new EventSource(
+        api.analyzeUrl(marketId, {
+          replay,
+          mode: personal ? "personal" : "demo",
+          wallet: personal ? address : null,
+        }),
+      );
       esRef.current = es;
 
       const on = (name: string, fn: (d: unknown) => void) =>
@@ -120,6 +135,23 @@ export function useAnalyzeStream(marketId: string) {
       on("anchored", (d) =>
         setState((s) => ({ ...s, anchored: d as OnchainTx, phase: "anchoring" })),
       );
+      // personal mode: the server hands us unsigned txns to sign in-browser
+      on("settle_request", (d) => {
+        setState((s) => ({ ...s, phase: "settling" }));
+        settle(d as SettleRequest)
+          .then((tx) => setState((s) => ({ ...s, settled: tx, phase: "anchoring" })))
+          .catch((e) =>
+            setState((s) => ({ ...s, error: `settle: ${e.message ?? e}`, phase: "error" })),
+          );
+      });
+      on("anchor_request", (d) => {
+        setState((s) => ({ ...s, phase: "anchoring" }));
+        anchor(d as AnchorRequest)
+          .then((tx) => setState((s) => ({ ...s, anchored: tx })))
+          .catch((e) =>
+            setState((s) => ({ ...s, error: `anchor: ${e.message ?? e}`, phase: "error" })),
+          );
+      });
       on("complete", () => setState((s) => ({ ...s, phase: "done" })));
       on("error", (d) =>
         setState((s) => ({
@@ -141,7 +173,7 @@ export function useAnalyzeStream(marketId: string) {
         es.close();
       };
     },
-    [marketId],
+    [marketId, demoMode, address, anchor, settle],
   );
 
   const running =

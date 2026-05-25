@@ -14,14 +14,63 @@ export const api = {
     fetch(`${API_BASE}/api/discover`, { method: "POST" }).then((r) => r.json()),
   trace: (id: number) => getJSON<TraceResp>(`/api/trace/${id}`),
   decision: (id: number) => getJSON<DecisionResp>(`/api/decisions/${id}`),
-  portfolio: () => getJSON<PortfolioResp>("/api/portfolio"),
+  // wallet (personal mode) restricts to positions/txns tied to that signer; omit for the shared agent record.
+  portfolio: (wallet?: string | null) =>
+    getJSON<PortfolioResp>(`/api/portfolio${wallet ? `?wallet=${encodeURIComponent(wallet)}` : ""}`),
   metrics: () => getJSON<MetricsResp>("/api/metrics"),
-  anchors: (limit = 50) => getJSON<{ anchors: Anchor[] }>(`/api/anchors?limit=${limit}`),
-  analyzeUrl: (id: string, replay = false) =>
-    `${API_BASE}/api/analyze/${encodeURIComponent(id)}${replay ? "?replay=true" : ""}`,
+  anchors: (limit = 50, wallet?: string | null) => {
+    const p = new URLSearchParams({ limit: String(limit) });
+    if (wallet) p.set("wallet", wallet);
+    return getJSON<{ anchors: Anchor[] }>(`/api/anchors?${p.toString()}`);
+  },
+  analyzeUrl: (id: string, opts: StreamOpts = {}) => {
+    const qs = streamQuery(opts);
+    return `${API_BASE}/api/analyze/${encodeURIComponent(id)}${qs ? `?${qs}` : ""}`;
+  },
+  autoUrl: (n: number, opts: StreamOpts = {}) => {
+    const qs = streamQuery({ ...opts, n });
+    return `${API_BASE}/api/auto${qs ? `?${qs}` : ""}`;
+  },
+  // Persist a client-signed (personal-mode) on-chain txn so it shows in the ledger.
+  recordAnchor: (body: AnchorRecord) =>
+    fetch(`${API_BASE}/api/anchors/record`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).then((r) => {
+      if (!r.ok) throw new Error(`record ${r.status}`);
+      return r.json() as Promise<OnchainTx>;
+    }),
 };
 
-import type { Anchor, GraphEdge, GraphNode, Market, Ontology } from "./types";
+export type StreamOpts = {
+  replay?: boolean;
+  mode?: "demo" | "personal";
+  wallet?: string | null;
+  n?: number;
+};
+
+function streamQuery(opts: StreamOpts): string {
+  const p = new URLSearchParams();
+  if (opts.replay) p.set("replay", "true");
+  if (opts.mode) p.set("mode", opts.mode);
+  if (opts.wallet) p.set("wallet", opts.wallet);
+  if (opts.n != null) p.set("n", String(opts.n));
+  return p.toString();
+}
+
+export type AnchorRecord = {
+  decision_id: number | null;
+  market_id: string | null;
+  kind: "anchor" | "settle";
+  tx_hash: string;
+  trace_hash?: string | null;
+  usdc_amount?: number | null;
+  to_address?: string | null;
+  from_address?: string | null;
+};
+
+import type { Anchor, GraphEdge, GraphNode, Market, Ontology, OnchainTx } from "./types";
 
 export type HealthResp = {
   ok: boolean;
