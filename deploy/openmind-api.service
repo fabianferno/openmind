@@ -1,0 +1,16 @@
+[Unit]
+Description=openmind API (FastAPI over the agent engine)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/openclob
+EnvironmentFile=/home/ubuntu/openclob/.env
+ExecStart=/home/ubuntu/openclob/.venv/bin/uvicorn agent.api.server:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
