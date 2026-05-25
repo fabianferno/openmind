@@ -1,0 +1,439 @@
+{
+  "market_id": "manifold:NuuPIIpNQ9",
+  "events": [
+    {
+      "event": "market",
+      "data": {
+        "id": "manifold:NuuPIIpNQ9",
+        "venue": "manifold",
+        "question": "Will Ukraine gain more territory than it loses this week, according to pro-Ukraine mappers?",
+        "category": "manifold",
+        "end_date": "2026-05-31T09:59:00+00:00",
+        "price_yes": 0.6000000000000001,
+        "volume_24h": 803.8680568557601
+      }
+    },
+    {
+      "event": "filter_passed",
+      "data": {
+        "market_id": "manifold:NuuPIIpNQ9",
+        "question": "Will Ukraine gain more territory than it loses this week, according to pro-Ukraine mappers?"
+      }
+    },
+    {
+      "event": "search_complete",
+      "data": {
+        "n": 8
+      }
+    },
+    {
+      "event": "ontology_generated",
+      "data": {
+        "entity_types": [
+          "Ukraine",
+          "Russia",
+          "MilitaryForce",
+          "Territory",
+          "Mapper",
+          "Counterattack",
+          "IntelligenceAgency",
+          "MilitaryLoss"
+        ],
+        "relation_types": [
+          "OCCUPIES",
+          "LIBERATED_BY",
+          "SUFFERED_LOSS_OF",
+          "REPORTED_BY",
+          "ACHIEVED_BY",
+          "FORCED_TO",
+          "SUPPORTED_BY",
+          "HINDERS"
+        ]
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "territory-ukraine",
+          "label": "Ukrainian Territory",
+          "type": "Territory",
+          "summary": "Land area of Ukraine",
+          "source_url": "https://www.businessinsider.com/ukraine-sets-russian-losses-goal-for-every-square-kilometer-captured-2026-5",
+          "published_date": "Thu, 21 May 2026 15:34:49 GMT",
+          "degree": 4
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "militaryforce-russia",
+          "label": "Russian Military Forces",
+          "type": "MilitaryForce",
+          "summary": "Armed forces of Russia",
+          "source_url": "https://understandingwar.org/research/russia-ukraine/russian-offensive-campaign-assessment-may-22-2026/",
+          "published_date": "Sat, 23 May 2026 00:11:28 GMT",
+          "degree": 2
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "counterattack-2026",
+          "label": "Ukrainian Counterattack 2026",
+          "type": "Counterattack",
+          "summary": "Military operation by Ukraine in 2026",
+          "source_url": "https://newsukraine.rbc.ua/news/ukrainian-forces-achieve-biggest-gains-since-1779357613.html",
+          "published_date": "Thu, 21 May 2026 10:05:00 GMT",
+          "degree": 2
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "militaryloss-russia-2026",
+          "label": "Russian Military Loss 2026",
+          "type": "MilitaryLoss",
+          "summary": "Losses suffered by Russian forces in 2026",
+          "source_url": "https://www.businessinsider.com/ukraine-sets-russian-losses-goal-for-every-square-kilometer-captured-2026-5",
+          "published_date": "Thu, 21 May 2026 15:34:49 GMT",
+          "degree": 2
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "ukraine",
+          "label": "Ukraine",
+          "type": "MilitaryLoss",
+          "summary": "Country in Eastern Europe",
+          "source_url": "https://understandingwar.org/research/russia-ukraine/russian-offensive-campaign-assessment-may-22-2026/",
+          "published_date": "Sat, 23 May 2026 00:11:28 GMT",
+          "degree": 1
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "russia",
+          "label": "Russia",
+          "type": "MilitaryLoss",
+          "summary": "Country in Eastern Europe and Northern Asia",
+          "source_url": "https://understandingwar.org/research/russia-ukraine/russian-offensive-campaign-assessment-may-22-2026/",
+          "published_date": "Sat, 23 May 2026 00:11:28 GMT",
+          "degree": 1
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "mapper-isw",
+          "label": "Institute for the Study of War",
+          "type": "Mapper",
+          "summary": "Think tank providing military analysis",
+          "source_url": "https://understandingwar.org/research/russia-ukraine/russian-offensive-campaign-assessment-may-22-2026/",
+          "published_date": "Sat, 23 May 2026 00:11:28 GMT",
+          "degree": 1
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "intelligenceagency-dia",
+          "label": "US Defense Intelligence Agency",
+          "type": "IntelligenceAgency",
+          "summary": "US agency providing military intelligence",
+          "source_url": "https://understandingwar.org/research/russia-ukraine/russian-offensive-campaign-assessment-may-22-2026/",
+          "published_date": "Sat, 23 May 2026 00:11:28 GMT",
+          "degree": 1
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "militaryforce-ukraine",
+          "label": "Ukrainian Military Forces",
+          "type": "MilitaryForce",
+          "summary": "Armed forces of Ukraine",
+          "source_url": "https://kyivindependent.com/ukraine-liberated-590-square-kilometers-of-territory-this-year-forcing-russia-toward-diplomacy-zelensky-says/",
+          "published_date": "Fri, 22 May 2026 20:11:08 GMT",
+          "degree": 0
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "russia",
+          "target": "territory-ukraine",
+          "type": "OCCUPIES",
+          "rationale": "Russia occupies part of Ukrainian territory",
+          "source_url": "https://www.businessinsider.com/ukraine-sets-russian-losses-goal-for-every-square-kilometer-captured-2026-5",
+          "published_date": "Thu, 21 May 2026 15:34:49 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "ukraine",
+          "target": "territory-ukraine",
+          "type": "RELATED_TO",
+          "rationale": "Ukraine liberates its own territory",
+          "source_url": "https://kyivindependent.com/ukraine-liberated-590-square-kilometers-of-territory-this-year-forcing-russia-toward-diplomacy-zelensky-says/",
+          "published_date": "Fri, 22 May 2026 20:11:08 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "militaryforce-russia",
+          "target": "territory-ukraine",
+          "type": "SUFFERED_LOSS_OF",
+          "rationale": "Russian forces lost territory in Ukraine",
+          "source_url": "https://www.businessinsider.com/ukraine-sets-russian-losses-goal-for-every-square-kilometer-captured-2026-5",
+          "published_date": "Thu, 21 May 2026 15:34:49 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "mapper-isw",
+          "target": "counterattack-2026",
+          "type": "REPORTED_BY",
+          "rationale": "ISW reported on Ukrainian counterattacks",
+          "source_url": "https://newsukraine.rbc.ua/news/ukrainian-forces-achieve-biggest-gains-since-1779357613.html",
+          "published_date": "Thu, 21 May 2026 10:05:00 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "counterattack-2026",
+          "target": "territory-ukraine",
+          "type": "ACHIEVED_BY",
+          "rationale": "Ukrainian counterattacks achieved territorial gains",
+          "source_url": "https://newsukraine.rbc.ua/news/ukrainian-forces-achieve-biggest-gains-since-1779357613.html",
+          "published_date": "Thu, 21 May 2026 10:05:00 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "militaryforce-russia",
+          "target": "militaryloss-russia-2026",
+          "type": "SUFFERED_LOSS_OF",
+          "rationale": "Russian forces suffered losses in 2026",
+          "source_url": "https://www.businessinsider.com/ukraine-sets-russian-losses-goal-for-every-square-kilometer-captured-2026-5",
+          "published_date": "Thu, 21 May 2026 15:34:49 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "intelligenceagency-dia",
+          "target": "militaryloss-russia-2026",
+          "type": "REPORTED_BY",
+          "rationale": "DIA reported on Russian military losses",
+          "source_url": "https://understandingwar.org/research/russia-ukraine/russian-offensive-campaign-assessment-may-22-2026/",
+          "published_date": "Sat, 23 May 2026 00:11:28 GMT"
+        }
+      }
+    },
+    {
+      "event": "graph_complete",
+      "data": {
+        "stats": {
+          "node_count": 9,
+          "edge_count": 7,
+          "type_counts": {
+            "Territory": 1,
+            "MilitaryForce": 2,
+            "Counterattack": 1,
+            "MilitaryLoss": 3,
+            "Mapper": 1,
+            "IntelligenceAgency": 1
+          },
+          "central": [
+            {
+              "label": "Ukrainian Territory",
+              "type": "Territory",
+              "degree": 4
+            },
+            {
+              "label": "Russian Military Forces",
+              "type": "MilitaryForce",
+              "degree": 2
+            },
+            {
+              "label": "Ukrainian Counterattack 2026",
+              "type": "Counterattack",
+              "degree": 2
+            },
+            {
+              "label": "Russian Military Loss 2026",
+              "type": "MilitaryLoss",
+              "degree": 2
+            },
+            {
+              "label": "Ukraine",
+              "type": "MilitaryLoss",
+              "degree": 1
+            }
+          ],
+          "entity_types": [
+            "Ukraine",
+            "Russia",
+            "MilitaryForce",
+            "Territory",
+            "Mapper",
+            "Counterattack",
+            "IntelligenceAgency",
+            "MilitaryLoss"
+          ],
+          "relation_types": [
+            "OCCUPIES",
+            "LIBERATED_BY",
+            "SUFFERED_LOSS_OF",
+            "REPORTED_BY",
+            "ACHIEVED_BY",
+            "FORCED_TO",
+            "SUPPORTED_BY",
+            "HINDERS"
+          ]
+        }
+      }
+    },
+    {
+      "event": "evidence",
+      "data": {
+        "citations": [
+          {
+            "url": "https://understandingwar.org/research/russia-ukraine/russian-offensive-campaign-assessment-may-22-2026/",
+            "title": "Russian Offensive Campaign Assessment, May 22, 2026 - Institute for the Study of War",
+            "published_date": "Sat, 23 May 2026 00:11:28 GMT"
+          },
+          {
+            "url": "https://www.businessinsider.com/ukraine-sets-russian-losses-goal-for-every-square-kilometer-captured-2026-5",
+            "title": "Ukraine wants Russia to pay for every square kilometer it takes with at least 200 losses \u2014 it's been hitting its number - Business Insider",
+            "published_date": "Thu, 21 May 2026 15:34:49 GMT"
+          },
+          {
+            "url": "https://kyivindependent.com/ukraine-liberated-590-square-kilometers-of-territory-this-year-forcing-russia-toward-diplomacy-zelensky-says/",
+            "title": "Ukraine liberated 590 square kilometers of territory this year, 'forcing Russia toward diplomacy,' Zelensky says - The Kyiv Independent",
+            "published_date": "Fri, 22 May 2026 20:11:08 GMT"
+          },
+          {
+            "url": "https://newsukraine.rbc.ua/news/ukrainian-forces-achieve-biggest-gains-since-1779357613.html",
+            "title": "Ukrainian forces achieve biggest gains since Kursk operation, ISW says - RBC-Ukraine",
+            "published_date": "Thu, 21 May 2026 10:05:00 GMT"
+          },
+          {
+            "url": "https://euromaidanpress.com/2026/05/21/ukrainian-forces-seize-tactical-initiative-across-frontline-syrskyi-says/",
+            "title": "Ukrainian forces seize tactical initiative across frontline, Syrskyi says - Euromaidan Press",
+            "published_date": "Thu, 21 May 2026 08:22:41 GMT"
+          },
+          {
+            "url": "https://www.theguardian.com/world/2026/may/22/ukraine-war-briefing-oil-plant-strikes-all-going-to-plan-says-zelenskyy",
+            "title": "Ukraine war briefing: Oil plant strikes all going to plan, says Zelenskyy - The Guardian",
+            "published_date": "Fri, 22 May 2026 02:33:00 GMT"
+          },
+          {
+            "url": "https://euobserver.com/217353/deleted-x-post-gives-glimpse-into-hell-on-earth-in-russias-kill-zone-ukraine-battlefield-update-day-1545/",
+            "title": "Deleted X post gives glimpse into \u2018hell on earth\u2019 in Russia\u2019s kill-zone (Ukraine Battlefield update, Day 1,545) - EUobserver",
+            "published_date": "Tue, 19 May 2026 14:43:19 GMT"
+          },
+          {
+            "url": "https://understandingwar.org/research/russia-ukraine/russian-offensive-campaign-assessment-may-20-2026/",
+            "title": "Russian Offensive Campaign Assessment, May 20, 2026 - Institute for the Study of War",
+            "published_date": "Thu, 21 May 2026 03:23:56 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "event": "decision",
+      "data": {
+        "decision_id": 192,
+        "p_yes": 0.75,
+        "market_price": 0.6000000000000001,
+        "confidence": 0.7,
+        "edge": 0.15,
+        "action": "enter_yes",
+        "rationale": "The evidence indicates that Ukrainian forces have been making significant territorial gains, particularly in southern Ukraine and around Kupiansk. The Institute for the Study of War (ISW) has reported these gains, and President Zelensky has also highlighted the liberation of territory. Given the recent momentum and the reported successes, it is likely that Ukraine will continue to gain more territory than it loses this week."
+      }
+    },
+    {
+      "event": "executed",
+      "data": {
+        "status": "filled",
+        "venue": "manifold",
+        "side": "YES",
+        "usd_size": 1.0
+      }
+    },
+    {
+      "event": "settled",
+      "data": {
+        "tx_hash": "0xbece3ee590e15dc107d51ba5701d3b0a3dda12d91e5524cfe71704ff5bd2cb1c",
+        "explorer_url": "https://testnet.arcscan.app/tx/0xbece3ee590e15dc107d51ba5701d3b0a3dda12d91e5524cfe71704ff5bd2cb1c",
+        "mocked": false,
+        "kind": "settle",
+        "network": "arc-testnet",
+        "usdc_amount": 0.01,
+        "to": "0x5a09e3eC3EFDD91205Cbb097142a4f4dCEFc7f02",
+        "decision_id": 192
+      }
+    },
+    {
+      "event": "anchored",
+      "data": {
+        "tx_hash": "0xc9c7017929fae9b8e7960e62dae55e3bf3a65e1f758c2e68613fb4a609f74bf5",
+        "explorer_url": "https://testnet.arcscan.app/tx/0xc9c7017929fae9b8e7960e62dae55e3bf3a65e1f758c2e68613fb4a609f74bf5",
+        "mocked": false,
+        "kind": "anchor",
+        "network": "arc-testnet",
+        "trace_hash": "0x03aac7f98a59115374da742581e98277db9596d259560861b94098a2457f7e66",
+        "decision_id": 192
+      }
+    },
+    {
+      "event": "complete",
+      "data": {
+        "action": "enter",
+        "decision_id": 192,
+        "trace_hash": "0x03aac7f98a59115374da742581e98277db9596d259560861b94098a2457f7e66",
+        "anchored": true,
+        "settled": true
+      }
+    }
+  ]
+}

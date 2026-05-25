@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/*
+  openmind — intelligence-terminal / classified-dossier aesthetic.
+  Ink-black canvas, hairline rules, editorial serif headlines, mono data,
+  a single electric-lime signal accent for live + on-chain states.
+*/
+
+@theme inline {
+  --color-bg: #08090a;
+  --color-bg-elev: #0d0f11;
+  --color-panel: #0b0d0f;
+  --color-line: #191d22;
+  --color-line-bright: #262b31;
+  --color-text: #e9e7df;
+  --color-muted: #8b9099;
+  --color-faint: #565b63;
+  --color-signal: #c6f24a;
+  --color-signal-dim: #2a3417;
+  --color-amber: #f2b441;
+  --color-cyan: #62d2e6;
+  --color-danger: #f2603c;
+
+  --font-serif: var(--font-instrument), Georgia, serif;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+html {
+  background: var(--color-bg);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-signal);
+  color: #07140a;
+}
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-line-bright); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-faint); }
+
+/* ---- atmosphere ---- */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.scanlines::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.012) 0px,
+    rgba(255, 255, 255, 0.012) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.vignette {
+  background:
+    radial-gradient(140% 120% at 50% -10%, rgba(198, 242, 74, 0.05), transparent 55%),
+    radial-gradient(120% 120% at 100% 110%, rgba(98, 210, 230, 0.04), transparent 50%);
+}
+
+/* ---- primitives ---- */
+.panel { background: var(--color-panel); border: 1px solid var(--color-line); }
+.hairline { border: 1px solid var(--color-line); }
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+}
+
+.mono { font-family: var(--font-mono); }
+.serif { font-family: var(--font-serif); }
+
+.glow-signal { text-shadow: 0 0 18px rgba(198, 242, 74, 0.55); }
+
+.signal-dot { animation: pulse 1.8s infinite; }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(198, 242, 74, 0.55); }
+  70% { box-shadow: 0 0 0 7px rgba(198, 242, 74, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(198, 242, 74, 0); }
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  background-position: -1px -1px;
+  opacity: 0.4;
+}
+
+.link-underline {
+  background-image: linear-gradient(var(--color-signal), var(--color-signal));
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size 0.3s ease;
+}
+.link-underline:hover { background-size: 100% 1px; }
+
+@keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.caret::after { content: "▋"; margin-left: 1px; animation: blink 1s step-end infinite; color: var(--color-signal); }

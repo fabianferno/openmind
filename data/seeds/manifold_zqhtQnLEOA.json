@@ -1,0 +1,403 @@
+{
+  "market_id": "manifold:zqhtQnLEOA",
+  "events": [
+    {
+      "event": "market",
+      "data": {
+        "id": "manifold:zqhtQnLEOA",
+        "venue": "manifold",
+        "question": "US and Iran announce a draft deal by end of Sunday?",
+        "category": "manifold",
+        "end_date": "2026-05-25T11:59:00+00:00",
+        "price_yes": 0.02580356381332501,
+        "volume_24h": 1552.4228837514268
+      }
+    },
+    {
+      "event": "filter_passed",
+      "data": {
+        "market_id": "manifold:zqhtQnLEOA",
+        "question": "US and Iran announce a draft deal by end of Sunday?"
+      }
+    },
+    {
+      "event": "search_complete",
+      "data": {
+        "n": 8
+      }
+    },
+    {
+      "event": "ontology_generated",
+      "data": {
+        "entity_types": [
+          "Person",
+          "Organization",
+          "Event",
+          "Policy",
+          "Place",
+          "Indicator"
+        ],
+        "relation_types": [
+          "PROPOSES",
+          "INFLUENCES",
+          "AFFECTS",
+          "MEMBER_OF",
+          "LOCATED_AT",
+          "DEPENDS_ON"
+        ]
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "draft-deal",
+          "label": "Draft Deal",
+          "type": "Event",
+          "summary": "Proposed agreement between US and Iran",
+          "source_url": "https://www.axios.com/2026/05/24/iran-deal-strait-hormuz-sanctions-nuclear",
+          "published_date": "Sun, 24 May 2026 11:49:41 GMT",
+          "degree": 4
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "donald-trump",
+          "label": "Donald Trump",
+          "type": "Person",
+          "summary": "US President",
+          "source_url": "https://www.dw.com/en/iran-war-trump-says-us-wont-rush-into-deal-with-tehran/live-77276381",
+          "published_date": "Mon, 25 May 2026 04:49:41 GMT",
+          "degree": 2
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "strait-of-hormuz",
+          "label": "Strait of Hormuz",
+          "type": "Place",
+          "summary": "Strategically vital oil choke point",
+          "source_url": "https://www.aljazeera.com/news/2026/5/24/us-iran-inch-closer-to-deal-to-end-the-war-what-to-know",
+          "published_date": "Sun, 24 May 2026 11:49:41 GMT",
+          "degree": 2
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "iran",
+          "label": "Iran",
+          "type": "Place",
+          "summary": "Country involved in negotiations",
+          "source_url": "https://www.dw.com/en/iran-war-trump-says-us-wont-rush-into-deal-with-tehran/live-77276381",
+          "published_date": "Mon, 25 May 2026 04:49:41 GMT",
+          "degree": 1
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "us",
+          "label": "United States",
+          "type": "Place",
+          "summary": "Country involved in negotiations",
+          "source_url": "https://www.dw.com/en/iran-war-trump-says-us-wont-rush-into-deal-with-tehran/live-77276381",
+          "published_date": "Mon, 25 May 2026 04:49:41 GMT",
+          "degree": 1
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "iranian-officials",
+          "label": "Iranian Officials",
+          "type": "Organization",
+          "summary": "Officials from Iran",
+          "source_url": "https://www.nytimes.com/2026/05/24/world/middleeast/trump-iran-peace-deal-strait-hormuz.html",
+          "published_date": "Sun, 24 May 2026 08:49:41 GMT",
+          "degree": 1
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "blockade",
+          "label": "Blockade",
+          "type": "Event",
+          "summary": "Iran's blockade of the Strait of Hormuz",
+          "source_url": "https://www.scmp.com/news/world/middle-east/article/3354647/iran-us-could-be-close-breakthrough-talks-draft-deal-end-war",
+          "published_date": "Sun, 24 May 2026 08:49:41 GMT",
+          "degree": 1
+        }
+      }
+    },
+    {
+      "event": "entity_extracted",
+      "data": {
+        "node": {
+          "id": "peace-deal",
+          "label": "Peace Deal",
+          "type": "Event",
+          "summary": "Proposed agreement to end the war",
+          "source_url": "https://www.aljazeera.com/news/2026/5/24/us-iran-inch-closer-to-deal-to-end-the-war-what-to-know",
+          "published_date": "Sun, 24 May 2026 11:49:41 GMT",
+          "degree": 0
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "donald-trump",
+          "target": "draft-deal",
+          "type": "INFLUENCES",
+          "rationale": "Trump says US won't 'rush into' deal with Tehran",
+          "source_url": "https://www.dw.com/en/iran-war-trump-says-us-wont-rush-into-deal-with-tehran/live-77276381",
+          "published_date": "Mon, 25 May 2026 04:49:41 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "iran",
+          "target": "draft-deal",
+          "type": "INFLUENCES",
+          "rationale": "Iranian officials say key differences still need to be resolved",
+          "source_url": "https://www.dw.com/en/iran-war-trump-says-us-wont-rush-into-deal-with-tehran/live-77276381",
+          "published_date": "Mon, 25 May 2026 04:49:41 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "us",
+          "target": "draft-deal",
+          "type": "INFLUENCES",
+          "rationale": "US is part of the negotiations",
+          "source_url": "https://www.dw.com/en/iran-war-trump-says-us-wont-rush-into-deal-with-tehran/live-77276381",
+          "published_date": "Mon, 25 May 2026 04:49:41 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "draft-deal",
+          "target": "strait-of-hormuz",
+          "type": "AFFECTS",
+          "rationale": "The draft calls for reopening the strait",
+          "source_url": "https://www.axios.com/2026/05/24/iran-deal-strait-hormuz-sanctions-nuclear",
+          "published_date": "Sun, 24 May 2026 11:49:41 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "iranian-officials",
+          "target": "strait-of-hormuz",
+          "type": "INFLUENCES",
+          "rationale": "Iranian officials suggested the oil choke point in the Strait of Hormuz",
+          "source_url": "https://www.nytimes.com/2026/05/24/world/middleeast/trump-iran-peace-deal-strait-hormuz.html",
+          "published_date": "Sun, 24 May 2026 08:49:41 GMT"
+        }
+      }
+    },
+    {
+      "event": "relation_extracted",
+      "data": {
+        "edge": {
+          "source": "donald-trump",
+          "target": "blockade",
+          "type": "INFLUENCES",
+          "rationale": "Trump says Iran blockade remains until deal is signed",
+          "source_url": "https://www.scmp.com/news/world/middle-east/article/3354647/iran-us-could-be-close-breakthrough-talks-draft-deal-end-war",
+          "published_date": "Sun, 24 May 2026 08:49:41 GMT"
+        }
+      }
+    },
+    {
+      "event": "graph_complete",
+      "data": {
+        "stats": {
+          "node_count": 8,
+          "edge_count": 6,
+          "type_counts": {
+            "Event": 3,
+            "Person": 1,
+            "Place": 3,
+            "Organization": 1
+          },
+          "central": [
+            {
+              "label": "Draft Deal",
+              "type": "Event",
+              "degree": 4
+            },
+            {
+              "label": "Donald Trump",
+              "type": "Person",
+              "degree": 2
+            },
+            {
+              "label": "Strait of Hormuz",
+              "type": "Place",
+              "degree": 2
+            },
+            {
+              "label": "Iran",
+              "type": "Place",
+              "degree": 1
+            },
+            {
+              "label": "United States",
+              "type": "Place",
+              "degree": 1
+            }
+          ],
+          "entity_types": [
+            "Person",
+            "Organization",
+            "Event",
+            "Policy",
+            "Place",
+            "Indicator"
+          ],
+          "relation_types": [
+            "PROPOSES",
+            "INFLUENCES",
+            "AFFECTS",
+            "MEMBER_OF",
+            "LOCATED_AT",
+            "DEPENDS_ON"
+          ]
+        }
+      }
+    },
+    {
+      "event": "evidence",
+      "data": {
+        "citations": [
+          {
+            "url": "https://www.dw.com/en/iran-war-trump-says-us-wont-rush-into-deal-with-tehran/live-77276381",
+            "title": "Iran war: Trump says US won't 'rush into' deal with Tehran",
+            "published_date": "Mon, 25 May 2026 04:49:41 GMT"
+          },
+          {
+            "url": "https://www.axios.com/2026/05/24/iran-deal-strait-hormuz-sanctions-nuclear",
+            "title": "Exclusive: What's inside the Iran deal Trump is close to signing",
+            "published_date": "Sun, 24 May 2026 11:49:41 GMT"
+          },
+          {
+            "url": "https://www.aljazeera.com/news/2026/5/24/us-iran-inch-closer-to-deal-to-end-the-war-what-to-know",
+            "title": "US, Iran inch closer to deal to end the war: What to know",
+            "published_date": "Sun, 24 May 2026 11:49:41 GMT"
+          },
+          {
+            "url": "https://www.washingtontimes.com/news/2026/may/23/exclusive-us-iran-announce-peace-deal-within-24-hours/",
+            "title": "U.S., Iran to announce draft of peace deal within 24 hours",
+            "published_date": "Sun, 24 May 2026 08:49:41 GMT"
+          },
+          {
+            "url": "https://www.nytimes.com/2026/05/24/world/middleeast/trump-iran-peace-deal-strait-hormuz.html",
+            "title": "Iranian Officials Say Proposed Peace Deal Would Open Strait of Hormuz",
+            "published_date": "Sun, 24 May 2026 08:49:41 GMT"
+          },
+          {
+            "url": "https://www.scmp.com/news/world/middle-east/article/3354647/iran-us-could-be-close-breakthrough-talks-draft-deal-end-war",
+            "title": "\u2018Time on our side\u2019: Trump says Iran blockade remains until deal is signed",
+            "published_date": "Sun, 24 May 2026 08:49:41 GMT"
+          },
+          {
+            "url": "https://www.turkiyetoday.com/region/us-iran-draft-deal-could-be-announced-within-24-hours-report-3220562",
+            "title": "US, Iran draft deal could be announced within 24 hours: Report",
+            "published_date": "Sun, 24 May 2026 08:49:41 GMT"
+          },
+          {
+            "url": "https://www.arabnews.com/node/2644645/middle-east",
+            "title": "Iran and US say could be close to agreement, Trump to assess draft deal",
+            "published_date": "Sun, 24 May 2026 08:49:41 GMT"
+          }
+        ]
+      }
+    },
+    {
+      "event": "decision",
+      "data": {
+        "decision_id": 191,
+        "p_yes": 0.15,
+        "market_price": 0.02580356381332501,
+        "confidence": 0.6,
+        "edge": 0.124,
+        "action": "enter_yes",
+        "rationale": "The evidence suggests that the US and Iran are close to reaching a draft deal, with multiple sources indicating that an announcement could be imminent. However, President Trump's statement that the US won't 'rush into' a deal and will take the necessary time to 'get it right' implies that the finalization might not happen by the end of Sunday. Additionally, the focus on 'wording' and the need for further assessments by Trump indicate that there are still some uncertainties and potential delays."
+      }
+    },
+    {
+      "event": "executed",
+      "data": {
+        "status": "simulated",
+        "venue": "manifold",
+        "side": "YES",
+        "usd_size": 0.7967876881228689,
+        "note": "Client error '400 Bad Request' for url 'https://api.manifold.markets/v0/bet'\nFor more information check: https://develop"
+      }
+    },
+    {
+      "event": "settled",
+      "data": {
+        "tx_hash": "0xe3b6d60e0bb4ec6c8f6cb2364b8327924d84cdbec10e6e4f74f69dcebd4d5d12",
+        "explorer_url": "https://testnet.arcscan.app/tx/0xe3b6d60e0bb4ec6c8f6cb2364b8327924d84cdbec10e6e4f74f69dcebd4d5d12",
+        "mocked": false,
+        "kind": "settle",
+        "network": "arc-testnet",
+        "usdc_amount": 0.01,
+        "to": "0x5a09e3eC3EFDD91205Cbb097142a4f4dCEFc7f02",
+        "decision_id": 191
+      }
+    },
+    {
+      "event": "anchored",
+      "data": {
+        "tx_hash": "0x6e4b2c6d8bd33ca0f0d2a149af413fd5ee00c3e1c9b17766554de778cbe592a7",
+        "explorer_url": "https://testnet.arcscan.app/tx/0x6e4b2c6d8bd33ca0f0d2a149af413fd5ee00c3e1c9b17766554de778cbe592a7",
+        "mocked": false,
+        "kind": "anchor",
+        "network": "arc-testnet",
+        "trace_hash": "0x1ae83ed249650765bde30f1228e6c729aabf0e1eb97b1dbb42f631e3033f0dff",
+        "decision_id": 191
+      }
+    },
+    {
+      "event": "complete",
+      "data": {
+        "action": "enter",
+        "decision_id": 191,
+        "trace_hash": "0x1ae83ed249650765bde30f1228e6c729aabf0e1eb97b1dbb42f631e3033f0dff",
+        "anchored": true,
+        "settled": true
+      }
+    }
+  ]
+}

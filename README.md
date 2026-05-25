@@ -1,200 +1,129 @@
-# openclob
+# openmind
 
-Autonomous prediction-market trading agent for **Polymarket** and **Manifold**, driven by an
-LLM reasoning loop (Claude via AWS Bedrock) and date-bounded web search (Tavily).
+**The prediction-market agent that shows its work — and proves it on-chain.**
 
-The agent fetches markets, reasons about them with information available *as of* a chosen point
-in time, takes positions, monitors them every cycle, and exits — treating YES/NO shares as
-continuously-priced assets rather than fixed-odds bets. Real money is the **last** step, not the
-first: the build is phased and each phase transition is gated on pre-committed metrics.
+openmind reads the news, **builds a knowledge graph** of who and what moves a prediction
+market, reasons over that graph to a calibrated **+EV bet**, then **anchors its entire
+reasoning trace on Arc and settles in USDC**. Not a black box — a glass one.
 
-See [`prd.md`](./prd.md) for the full goals, strategy, gates, and phased build plan — it is the
-source of truth for *what* the system does and *why*. Read it before any non-trivial design change.
+> Built for the **Agora Agents Hackathon (Canteen × Circle)** — settled on **Arc** with
+> **USDC**. Tackles **RFB 02 — Prediction Market Trader Intelligence** and the research angle
+> *"reasoning traces as the product, anchored on Arc."* It's built on top of
+> [`openclob`](./prd.md), a phased autonomous prediction-market trading engine.
 
-> **Not financial advice.** This is a skill-validation exercise with optional small-stakes
-> deployment ($20–50 bankroll). It is not designed to be reliably profitable.
+---
 
-## Quick start
+## Why it's different
 
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-cp .env.example .env             # then fill in keys
-mkdir -p data logs
+Most trading agents emit a number. openmind emits an **auditable reasoning artifact**:
 
-# initialise the SQLite schema
-python -m agent init-db
-```
+1. **GraphRAG reasoning, not vibes.** For each market, the agent designs a bespoke *ontology*
+   (entity + relation types), extracts an *entity knowledge graph* from date-bounded news, and
+   feeds a summary of that graph into the forecast — so the graph **drives** the decision. You
+   watch it build, node by node, live.
+2. **Verifiable on-chain traces.** The full trace (ontology + graph + evidence + decision) is
+   canonicalised, hashed (sha256), and the hash is **anchored on Arc**. Anyone can re-hash the
+   trace in their browser and confirm it matches the chain. A symbolic **USDC stake is settled**
+   on Arc per trade.
+3. **A real autonomous engine underneath.** Filters → ambiguity check → date-bounded Tavily
+   search (temporal-guarded against leakage) → graph-augmented reasoning → calibrated fractional
+   Kelly sizing → paper/dry-run execution. Circuit breakers the LLM cannot bypass.
 
-The CLI is also installed as the `openclob` console script (`openclob init-db`, etc.).
+Cheap by design: reasoning runs on **Amazon Nova** via Bedrock — a full analyze costs ~**$0.015**.
 
-## Modes
+## Proof: real Arc testnet transactions
 
-`AGENT_MODE` selects both the data source and the executor:
+These were produced by the agent during development (chain id `5042002`, gas paid in USDC):
 
-| mode       | discovery          | executor                  | orders sent             |
-|------------|--------------------|---------------------------|-------------------------|
-| `backtest` | cached snapshots   | harness (not the loop)    | no                      |
-| `paper`    | Manifold           | `ManifoldExecutor`        | play-money              |
-| `dryrun`   | Polymarket         | `LiveExecutor` (dry path) | signed, **not** submitted |
-| `live`     | Polymarket         | `LiveExecutor`            | yes (maker-first limit) |
+| Kind | Tx | Explorer |
+|------|----|----------|
+| Trace anchor | `0xc9c7017929fae9b8…09f74bf5` | [arcscan](https://testnet.arcscan.app/tx/0xc9c7017929fae9b8e7960e62dae55e3bf3a65e1f758c2e68613fb4a609f74bf5) |
+| USDC settle | `0xbece3ee590e15dc1…5bd2cb1c` | [arcscan](https://testnet.arcscan.app/tx/0xbece3ee590e15dc107d51ba5701d3b0a3dda12d91e5524cfe71704ff5bd2cb1c) |
+| Trace anchor | `0x6e4b2c6d8bd33ca0…cbe592a7` | [arcscan](https://testnet.arcscan.app/tx/0x6e4b2c6d8bd33ca0f0d2a149af413fd5ee00c3e1c9b17766554de778cbe592a7) |
 
-## Running the agent
+## Demo flow (the ≤3-min video)
 
-```bash
-# one cycle (cron-friendly) — prints a JSON summary
-python -m agent cycle
-
-# run forever, sleeping AGENT_CYCLE_SECONDS between cycles (override with --period)
-python -m agent loop [--period 1200]
-```
-
-A cycle (`agent/agent.py::run_cycle`): check circuit breakers → cancel stale orders (live only)
-→ re-evaluate every open position → discover candidate markets → pre-filter, ambiguity-check,
-and run entry reasoning on each → place entries via the mode's executor. `MAX_CANDIDATES_PER_CYCLE`
-(20) bounds LLM cost per cycle.
-
-## Backtesting
-
-The backtest replays cached snapshots of resolved markets, so you must hydrate history first.
-Manifold is the default source (it keeps full bet history; Polymarket purges after ~6 weeks).
-
-```bash
-# pull resolved markets + price snapshots into the DB
-python -m agent hydrate-history --target 500
-python -m agent hydrate-history --source polymarket --target 500 --tag 2:politics
-
-# replay: sample N days before resolution, score reasoning against the actual outcome
-python -m agent backtest --days 7 --limit 300 [--category geopolitics]
-
-# Phase-1 gate: rerun with intentionally broken date bounds. If the leaky Brier
-# isn't dramatically better (delta >= 0.05), leak prevention is broken. Exits 2 on fail.
-python -m agent leakage-check --days 7 --limit 100
-```
-
-If the agent can't beat the market baseline in backtest, the project ends there — no proceeding
-to paper trading "to see what happens".
-
-## Operating & monitoring
-
-```bash
-python -m agent report [--json]      # daily report — the same metrics the gates check
-python -m agent recompute-metrics    # recompute per-category Brier/ECE/ROI/calibration
-python -m agent block <pattern>      # add a substring to the blocklist (matched on the question)
-python -m agent trip-breaker <reason>  # manually halt trading
-python -m agent reset-breaker          # clear the manual breaker
-```
-
-## Gates between phases
-
-Phase transitions are pre-committed and metric-gated, not vibes-based — see §3 of `prd.md`.
-The thresholds tighten as real money comes into play:
-
-| metric (gate)                | backtest      | paper         | real money            |
-|------------------------------|---------------|---------------|-----------------------|
-| sample size (resolved)       | ≥ 300         | ≥ 100         | ongoing               |
-| Brier score                  | ≤ 0.15        | ≤ 0.17        | ≤ 0.17 (trailing 50)  |
-| ECE                          | ≤ 0.05        | ≤ 0.07        | ≤ 0.08 (trailing 50)  |
-| ROI after fees               | > 0%          | > 0%          | > 0% over 30 days     |
-| per-category Brier           | ≤ 0.18        | ≤ 0.18        | ≤ 0.18                |
-| temporal leakage check       | passes        | n/a           | n/a                   |
-
-`report` and `leakage-check` print the relevant numbers. If a gate fails, diagnose and fix — or
-kill it. Don't grind.
+Pick a market → watch the **Reasoning Room** build the ontology and entity graph live →
+see the decision (P(YES) vs market price, edge, Kelly size) → it executes on Manifold and
+**settles + anchors on Arc** → open the **Verify** page to re-hash the trace and match it
+against the on-chain anchor.
 
 ## Architecture
 
 ```
-agent/
-├── config.py              # pydantic-settings singleton — import `settings`, never read os.environ
-├── logging.py             # structlog setup
-├── agent.py               # run_cycle / run_loop — the main loop
-├── __main__.py            # click CLI (installed as `openclob`)
-├── data/                  # market clients
-│   ├── manifold.py        #   Manifold API (paper discovery + backtest history)
-│   ├── polymarket_gamma.py#   Polymarket discovery + metadata (cheap)
-│   ├── polymarket_clob.py #   order book depth + signed orders via py-clob-client
-│   └── historical.py      #   hydrate resolved markets + snapshots for backtests
-├── reasoning/             # the LLM layer
-│   ├── claude_client.py   #   Bedrock wrapper with per-decision + per-day USD caps
-│   ├── search.py          #   Tavily, date-bounded queries
-│   ├── prompts.py         #   ambiguity check, entry reasoning, exit reasoning
-│   └── temporal_guard.py  #   rejects search results published after the reasoning cutoff
-├── strategy/
-│   ├── filters.py         #   liquidity / category / price / blocklist pre-filter (cheap)
-│   ├── entry.py           #   LLM-driven entry plan
-│   ├── exit.py            #   LLM-driven exit decisions on open positions
-│   ├── sizing.py          #   calibration-adjusted fractional Kelly with hard caps
-│   └── calibration.py     #   per-category Brier/ECE → multiplier on bet size
-├── execution/
-│   ├── paper.py           #   ManifoldExecutor
-│   ├── live.py            #   LiveExecutor (Polymarket; also handles dryrun)
-│   └── safety.py          #   circuit breakers — NOT bypassable by the LLM
-├── backtest/
-│   ├── harness.py         #   replays cached snapshots
-│   ├── leakage_check.py   #   Phase-1 temporal-leakage gate
-│   └── metrics.py         #   Brier / ECE / ROI
-├── monitor/
-│   ├── positions.py       #   re-evaluate open positions each cycle
-│   ├── report.py          #   daily report numbers (same metrics the gates check)
-│   └── alerts.py          #   webhook alerts
-└── store/
-    ├── schema.sql         #   source of truth for the SQLite schema
-    └── db.py              #   thin DAO; all persistence goes through db.connect()
+Next.js + Tailwind + shadcn-style UI   (Terminal · Reasoning Room · Verify · Ledger)
+        ▲  SSE (live build stream)      │  REST (history)
+        │                               ▼
+FastAPI sidecar  (agent/api)  ── streams ontology→entities→graph→decision→settled→anchored
+        │                               │
+EXISTING openclob engine  ───────▶  NEW agent/graphrag/   (ontology → entities → graph)
+(data/reasoning/strategy/             graph summary feeds the entry reasoning prompt
+ execution/store/monitor)                   │
+        │                                   ▼
+NEW agent/onchain/  (web3.py → Arc testnet: anchor trace hash + settle USDC)
+        ▼
+SQLite (+ graph_runs/nodes/edges, trace_blobs, onchain_anchors)
 ```
 
-### Discovery cost-shaping
+Design spec: [`docs/superpowers/specs/2026-05-25-openmind-graphrag-prediction-agent-design.md`](./docs/superpowers/specs/2026-05-25-openmind-graphrag-prediction-agent-design.md).
 
-Polymarket discovery is two-staged on purpose: a cheap Gamma list → `filters.passes_all` → only
-survivors get an (expensive) CLOB book-depth fetch. Preserve this ordering when adding filters;
-an expensive check before the pre-filter inflates per-cycle API cost linearly with market count.
+## Quick start
 
-### Data model
-
-SQLite, schema in `agent/store/schema.sql`. Key tables: `markets` (everything seen, with snapshot
-prices and resolution status), `decisions` (every reasoning call — prompt, search used, output,
-tokens, cost; append-only), `positions` (open/closed, linked to the opening/closing decision),
-`orders` (pending maker orders, tracked so stale ones can be cancelled), `metrics` (rolling
-per-category Brier/ECE/PnL/calibration), `llm_usage` (daily token-cost ledger), `breaker_state`,
-`market_snapshots` (backtest replay data), and `blocklist`.
-
-### Safety invariants
-
-- Circuit breakers in `execution/safety.py` are **not bypassable by the LLM** — new limits go
-  here, not in prompts. They cover: daily loss cap (halt 24h), max open positions, per-market
-  cap, slippage guard (cancel if executed vs. quoted differs > 2%), API-failure cooldown
-  (3 consecutive failures → halt 1h), and a manual trip.
-- Decisions and outcomes are logged to SQLite so calibration can recompute — don't add ephemeral
-  state that bypasses the DB.
-- `temporal_guard` ensures backtests only use information available before a market's cutoff. Any
-  new search/data path must go through it or document why it can't leak. The `leakage-check`
-  command validates that this actually works.
-
-## Configuration
-
-All config is environment-driven via `.env` (see [`.env.example`](./.env.example) for the full,
-documented list). Highlights:
-
-- **Runtime** — `AGENT_MODE`, `AGENT_BANKROLL`, `AGENT_CYCLE_SECONDS`, `AGENT_CATEGORIES`,
-  `AGENT_PER_MARKET_CAP`, `AGENT_MAX_POSITIONS`, `AGENT_DAILY_LOSS_CAP`.
-- **LLM (AWS Bedrock)** — `AWS_*` credentials, `BEDROCK_MODEL_ID`, `BEDROCK_MODEL_ID_CHEAP`
-  (used for the cheap ambiguity pre-filter), `LLM_PER_DECISION_USD_CAP`, `LLM_PER_DAY_USD_CAP`,
-  and the per-MTok pricing used for budget accounting.
-- **Search** — `TAVILY_API_KEY`, `TAVILY_MAX_RESULTS`.
-- **Venues** — `MANIFOLD_*` (paper); `POLYMARKET_*` + `POLYGON_RPC_URL` (live/dryrun).
-- **Storage / observability** — `AGENT_DB_PATH`, `AGENT_LOG_PATH`, `AGENT_LOG_LEVEL`,
-  `ALERT_WEBHOOK_URL`.
-
-## Development
+**1. Backend (Python 3.11+, uses [uv](https://github.com/astral-sh/uv)):**
 
 ```bash
-pytest                              # full suite
-pytest tests/test_safety.py -q      # single file
-pytest tests/test_safety.py::test_name
-ruff check . && ruff format .
-mypy agent
+uv venv && source .venv/bin/activate
+uv pip install -e ".[dev]"
+cp .env.example .env        # fill in AWS (Bedrock/Nova), Tavily, ARC_TESTNET_WALLET_PRIVATE_KEY
+mkdir -p data logs
+python -m agent init-db
+
+# run the API sidecar
+uvicorn agent.api.server:app --port 8000
 ```
 
-Requires Python ≥ 3.11.
-</content>
-</invoke>
+Fund the Arc wallet with testnet USDC from <https://faucet.circle.com/> (select Arc Testnet).
+Without `ARC_ENABLED`/a key, on-chain calls degrade to clearly-flagged mock txns.
+
+**2. Frontend (Node 18+):**
+
+```bash
+cd web
+npm install
+echo "NEXT_PUBLIC_API_BASE=http://localhost:8000" > .env.local
+npm run dev        # http://localhost:3000
+```
+
+**3. Seed demo markets (optional, for reliable replay):**
+
+```bash
+python -m tools.seed_demo            # auto-pick top open markets
+# or: python -m tools.seed_demo manifold:<id> ...
+```
+
+## How it maps to the judging criteria
+
+- **Agentic sophistication (30%)** — the agent autonomously designs an ontology, builds a graph,
+  reasons, sizes with Kelly, executes, *and* settles on-chain. End to end, no human in the loop.
+- **Circle / Arc tooling (20%)** — real USDC settlement + trace anchoring on Arc testnet, gas in
+  USDC, arcscan-verifiable. `agent/onchain/arc.py`.
+- **Innovation (20%)** — verifiable reasoning traces as the product (research angle #1) + GraphRAG
+  applied to prediction-market forecasting.
+- **Traction (30%)** — honest: a POC built in the final window, with real on-chain testnet txns.
+
+## The underlying engine (openclob)
+
+openmind is built on the openclob trading agent. Its phased build, strategy, safety invariants,
+and metric gates live in [`prd.md`](./prd.md) and [`CLAUDE.md`](./CLAUDE.md). Highlights:
+
+- Continuous buy/sell of YES/NO shares (not bet-and-hold); entry **and** exit decisions each cycle.
+- Temporal-guard leakage prevention on all search (`agent/reasoning/temporal_guard.py`).
+- Hard-coded circuit breakers the LLM cannot bypass (`agent/execution/safety.py`).
+- Modes: `backtest | paper (Manifold) | dryrun | live (Polymarket)` via `AGENT_MODE`.
+
+```bash
+python -m agent cycle        # one autonomous cycle (discovery → reason → trade)
+pytest                       # 45 tests
+```
+
+> **Not financial advice.** Skill-validation / research project; paper + dry-run by default.
